@@ -579,10 +579,10 @@ struct DreamImageSection: View {
     let store: DreamStore
 
     @StateObject private var imageService = ImageGenerationService()
-    @State private var selectedStyle: DreamImageStyle = .illustration
-    @State private var numberOfImages: Int = 4
+    @State private var selectedStyle: DreamImageStyle = .comicBook
     @State private var showImageGallery = false
     @State private var errorMessage: String?
+    @State private var showSignUpBanner = false
 
     private var isAvailable: Bool {
         ImageGenerationService.isAvailable
@@ -612,11 +612,16 @@ struct DreamImageSection: View {
 
             // Show provider info if available
             if isAvailable && !dream.hasImages {
-                HStack(spacing: 4) {
-                    Image(systemName: "apple.logo")
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "square.stack.3d.up.fill")
+                            .font(.caption2)
+                        Text("Flat Vector Style · On-Device")
+                            .font(.caption)
+                    }
+                    Text("AI creates 1-4 panels based on story")
                         .font(.caption2)
-                    Text("Using Apple Image Playground")
-                        .font(.caption)
+                        .foregroundColor(.gray)
                 }
                 .foregroundColor(.secondary)
             }
@@ -624,13 +629,13 @@ struct DreamImageSection: View {
             if !isAvailable {
                 // Not available message
                 VStack(spacing: 8) {
-                    Image(systemName: "apple.logo")
+                    Image(systemName: "cpu")
                         .font(.largeTitle)
                         .foregroundColor(.secondary)
-                    Text("Coming Soon")
+                    Text("MLX Not Available")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    Text("Image generation requires Xcode 16.3+ and iOS 18.4+ with Apple Intelligence.")
+                    Text("Image generation requires Apple Silicon device (iPhone 12+ or M1+ Mac).")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -640,6 +645,9 @@ struct DreamImageSection: View {
             } else if dream.hasImages {
                 // Show existing images preview
                 DreamImagePreview(images: dream.sortedImages)
+
+                // Subtle sign-up prompt after image generation
+                SignUpPromptBanner(isVisible: $showSignUpBanner)
 
                 // Style picker for regeneration
                 VStack(alignment: .leading, spacing: 8) {
@@ -659,26 +667,11 @@ struct DreamImageSection: View {
                     }
                 }
 
-                // Number of images for regeneration
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Number of Scenes")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-
-                    Picker("Scenes", selection: $numberOfImages) {
-                        Text("2").tag(2)
-                        Text("3").tag(3)
-                        Text("4").tag(4)
-                        Text("6").tag(6)
-                    }
-                    .pickerStyle(.segmented)
-                }
-
                 // Regenerate option with loading state
                 if imageService.isGenerating {
                     VStack(spacing: 12) {
                         ProgressView(value: imageService.progress) {
-                            Text("Regenerating images...")
+                            Text(imageService.statusMessage.isEmpty ? "Generating..." : imageService.statusMessage)
                         }
 
                         Button("Cancel") {
@@ -705,7 +698,7 @@ struct DreamImageSection: View {
                 }
             } else {
                 // Generation options
-                Text("Create a visual sequence of your peaceful dream")
+                Text("Create flat vector comic panels from your dream")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
@@ -727,26 +720,11 @@ struct DreamImageSection: View {
                     }
                 }
 
-                // Number of images
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Number of Scenes")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-
-                    Picker("Scenes", selection: $numberOfImages) {
-                        Text("2").tag(2)
-                        Text("3").tag(3)
-                        Text("4").tag(4)
-                        Text("6").tag(6)
-                    }
-                    .pickerStyle(.segmented)
-                }
-
                 // Generate button
                 if imageService.isGenerating {
                     VStack(spacing: 12) {
                         ProgressView(value: imageService.progress) {
-                            Text("Generating images...")
+                            Text(imageService.statusMessage.isEmpty ? "Generating..." : imageService.statusMessage)
                         }
 
                         Button("Cancel") {
@@ -785,26 +763,21 @@ struct DreamImageSection: View {
                let style = DreamImageStyle.allCases.first(where: { $0.rawValue == styleString }) {
                 selectedStyle = style
             }
-            // Initialize number of images from existing
-            if let images = dream.generatedImages, !images.isEmpty {
-                numberOfImages = images.count
-            }
         }
     }
 
     private func generateImages() {
         guard let rewrittenText = dream.rewrittenText else { return }
-        print("AGAIN WE ARE HERE THIS IS THE PROMPT \(rewrittenText)")
+        print("Generating comic panels for dream story...")
 
         errorMessage = nil
-    
 
         Task {
             do {
+                // AI Visual Director decides panel count based on story complexity
                 let images = try await imageService.generateSequenceImages(
                     from: rewrittenText,
-                    style: selectedStyle,
-                    numberOfImages: numberOfImages
+                    style: selectedStyle
                 )
 
                 // Update dream with generated images
@@ -812,6 +785,11 @@ struct DreamImageSection: View {
                 updated.generatedImages = images
                 updated.imageStyle = selectedStyle.rawValue
                 store.updateDream(updated)
+
+                // Show subtle sign-up prompt for non-authenticated users
+                if !AuthManager.shared.isAuthenticated {
+                    showSignUpBanner = true
+                }
             } catch let error as ImageGenerationError {
                 errorMessage = error.localizedDescription
             } catch {

@@ -1,7 +1,6 @@
 import Foundation
 import SwiftUI
 import Combine
-import ImagePlayground
 
 // MARK: - Image Generation Error
 
@@ -9,20 +8,20 @@ enum ImageGenerationError: LocalizedError {
     case notSupported
     case unavailable
     case cancelled
-    case unsupportedLanguage
+    case modelNotLoaded
     case creationFailed(String)
     case noImagesGenerated
 
     var errorDescription: String? {
         switch self {
         case .notSupported:
-            return "Image generation requires iOS 18.4+ with Apple Intelligence."
+            return "Image generation requires Apple Silicon device."
         case .unavailable:
-            return "Image Playground is unavailable. Please ensure Apple Intelligence models are downloaded."
+            return "MLX image generation is unavailable. Please ensure the model is downloaded."
         case .cancelled:
             return "Image generation was cancelled."
-        case .unsupportedLanguage:
-            return "The text language is not supported for image generation."
+        case .modelNotLoaded:
+            return "MLX model not loaded. Please wait for initialization."
         case .creationFailed(let message):
             return "Image creation failed: \(message)"
         case .noImagesGenerated:
@@ -31,37 +30,41 @@ enum ImageGenerationError: LocalizedError {
     }
 }
 
-// MARK: - Image Style
+// MARK: - Image Style (Maps to MLX styles)
 
 enum DreamImageStyle: String, CaseIterable, Identifiable {
-    case animation = "Animation"
-    case illustration = "Illustration"
-    case sketch = "Sketch"
+    case comicBook = "Comic Book"
+    case popArt = "Pop Art"
+    case graphicNovel = "Graphic Novel"
+    case lineArt = "Line Art"
 
     var id: String { rawValue }
 
     var icon: String {
         switch self {
-        case .animation: return "film"
-        case .illustration: return "paintbrush"
-        case .sketch: return "pencil.and.outline"
+        case .comicBook: return "book.pages"
+        case .popArt: return "sparkles.rectangle.stack"
+        case .graphicNovel: return "text.book.closed"
+        case .lineArt: return "pencil.and.outline"
         }
     }
 
     var description: String {
         switch self {
-        case .animation: return "3D animated movie style"
-        case .illustration: return "Flat 2D illustration"
-        case .sketch: return "Hand-drawn sketch"
+        case .comicBook: return "Bold lines, halftone dots, action effects"
+        case .popArt: return "Vibrant colors, high contrast, stylized"
+        case .graphicNovel: return "Dramatic shadows, strong composition"
+        case .lineArt: return "Clean outlines, minimal shading"
         }
     }
 
-    @available(iOS 18.4, *)
-    var imagePlaygroundStyle: ImagePlaygroundStyle {
+    /// Convert to MLX style
+    var mlxStyle: MLXImageStyle {
         switch self {
-        case .animation: return .animation
-        case .illustration: return .illustration
-        case .sketch: return .sketch
+        case .comicBook: return .comicBook
+        case .popArt: return .popArt
+        case .graphicNovel: return .graphicNovel
+        case .lineArt: return .lineArt
         }
     }
 }
@@ -85,6 +88,16 @@ struct GeneratedDreamImage: Identifiable, Codable, Equatable {
         self.createdAt = Date()
     }
 
+    /// Initialize from MLX generated image
+    init(from mlxImage: GeneratedMLXImage) {
+        self.id = mlxImage.id
+        self.imageData = mlxImage.imageData
+        self.prompt = mlxImage.prompt
+        self.style = mlxImage.style
+        self.sequenceIndex = mlxImage.sequenceIndex
+        self.createdAt = mlxImage.createdAt
+    }
+
     var uiImage: UIImage? {
         UIImage(data: imageData)
     }
@@ -96,33 +109,55 @@ struct GeneratedDreamImage: Identifiable, Codable, Equatable {
 class ImageGenerationService: ObservableObject {
     @Published var isGenerating = false
     @Published var progress: Double = 0
+    @Published var statusMessage: String = ""
     @Published var generatedImages: [GeneratedDreamImage] = []
     @Published var error: ImageGenerationError?
+    @Published var isModelLoaded = false
 
     private var isCancelled = false
     private var currentTask: Task<Void, Never>?
+    private let mlxService = MLXImageService.shared
 
-    /// Check if Image Playground is available
+    /// Check if MLX is available
     static var isAvailable: Bool {
-        if #available(iOS 18.4, *) {
-            return true
+        return MLXImageService.isAvailable
+    }
+
+    init() {
+        // Observe MLX service state
+        Task {
+            await observeMLXService()
         }
-        return false
+    }
+
+    private func observeMLXService() async {
+        // Keep model loaded state in sync
+        for await _ in mlxService.$isModelLoaded.values {
+            self.isModelLoaded = mlxService.isModelLoaded
+        }
+    }
+
+    /// Load the MLX model
+    func loadModel() async throws {
+        statusMessage = "Loading MLX model..."
+        try await mlxService.loadModel()
+        isModelLoaded = true
+        statusMessage = ""
     }
 
     func cancel() {
         isCancelled = true
+        mlxService.cancel()
         currentTask?.cancel()
         currentTask = nil
         isGenerating = false
     }
 
-    /// Generate sequence images from a rewritten dream
-    @available(iOS 18.4, *)
+    /// Generate sequence images from a rewritten dream using MLX
+    /// Panel count is automatically determined by AI based on story complexity (1-4 panels)
     func generateSequenceImages(
         from text: String,
-        style: DreamImageStyle,
-        numberOfImages: Int = 4
+        style: DreamImageStyle
     ) async throws -> [GeneratedDreamImage] {
         // Cancel any existing task
         currentTask?.cancel()
@@ -135,88 +170,94 @@ class ImageGenerationService: ObservableObject {
         isCancelled = false
         progress = 0
         generatedImages = []
+        statusMessage = "Analyzing story..."
 
-        defer { isGenerating = false }
-
-        let scenes = splitIntoScenes(text: text, count: numberOfImages)
-        var images: [GeneratedDreamImage] = []
-
-        for (index, scene) in scenes.enumerated() {
-            if isCancelled { throw ImageGenerationError.cancelled }
-
-            // Create a fresh ImageCreator for each image to avoid state issues
-            let image = try await generateSingleImageWithRetry(
-                prompt: scene,
-                style: style,
-                sequenceIndex: index,
-                maxRetries: 2
-            )
-
-            images.append(image)
-            progress = Double(index + 1) / Double(scenes.count)
-            self.generatedImages = images
-
-            // Small delay between images to avoid overwhelming the API
-            if index < scenes.count - 1 {
-                try await Task.sleep(nanoseconds: 300_000_000) // 0.3 second
-            }
+        defer {
+            isGenerating = false
+            statusMessage = ""
         }
+
+        // Check if model is loaded
+        if !mlxService.isModelLoaded {
+            statusMessage = "Loading MLX model..."
+            try await mlxService.loadModel()
+        }
+
+        // Phase 1: Generate MLX-compatible scene descriptions using AI Visual Director
+        // AI decides how many panels (1-4) based on story complexity
+        print("AI Visual Director analyzing story...")
+        statusMessage = "Creating comic panels..."
+
+        let aiService = AIService()
+        let scenes: [String]
+
+        do {
+            let generatedScenes = try await aiService.generateComicScenes(from: text)
+
+            // Validate and fallback if needed
+            if generatedScenes.isEmpty {
+                print("AI scene generation returned empty, using fallback")
+                scenes = generateFallbackScenes(count: 3)
+            } else {
+                // Use whatever the AI decided (1-4 panels)
+                scenes = generatedScenes
+                print("AI Visual Director decided on \(scenes.count) panels")
+            }
+        } catch {
+            print("AI scene generation failed: \(error), using fallback")
+            scenes = generateFallbackScenes(count: 3)
+        }
+
+        print("Generated \(scenes.count) comic panel prompts:")
+        for (i, scene) in scenes.enumerated() {
+            print("  Panel \(i + 1): \(scene.prefix(100))...")
+        }
+
+        if isCancelled { throw ImageGenerationError.cancelled }
+
+        // Phase 2: Generate images using MLX
+        statusMessage = "Generating \(scenes.count) images..."
+
+        let mlxImages = try await mlxService.generateComicSequence(
+            scenes: scenes,
+            style: style.mlxStyle
+        )
+
+        // Convert to GeneratedDreamImage
+        let images = mlxImages.map { GeneratedDreamImage(from: $0) }
+        self.generatedImages = images
 
         if images.isEmpty { throw ImageGenerationError.noImagesGenerated }
         return images
     }
 
-    /// Generate a single image with retry logic
-    @available(iOS 18.4, *)
-    private func generateSingleImageWithRetry(
-        prompt: String,
+    /// Legacy method for backward compatibility (numberOfImages is ignored - AI decides)
+    func generateSequenceImages(
+        from text: String,
         style: DreamImageStyle,
-        sequenceIndex: Int,
-        maxRetries: Int
-    ) async throws -> GeneratedDreamImage {
-        var lastError: Error?
-
-        for attempt in 0...maxRetries {
-            if isCancelled { throw ImageGenerationError.cancelled }
-
-            do {
-                // Create a fresh ImageCreator for each attempt
-                let imageCreator = try await ImageCreator()
-                let concept = ImagePlaygroundConcept.text(prompt)
-                let imageStream = imageCreator.images(for: [concept], style: style.imagePlaygroundStyle, limit: 1)
-
-                for try await createdImage in imageStream {
-                    let uiImage = UIImage(cgImage: createdImage.cgImage)
-                    if let imageData = uiImage.pngData() {
-                        print("SUCCESS - Prompt: \(prompt)")
-                        return GeneratedDreamImage(
-                            imageData: imageData,
-                            prompt: prompt,
-                            style: style,
-                            sequenceIndex: sequenceIndex
-                        )
-                    }
-                }
-                throw ImageGenerationError.noImagesGenerated
-            } catch {
-                lastError = error
-                print("Image generation attempt \(attempt + 1) failed: \(error)")
-
-                if isCancelled { throw ImageGenerationError.cancelled }
-
-                // Wait before retry (exponential backoff)
-                if attempt < maxRetries {
-                    let delay = UInt64((attempt + 1) * 1_000_000_000) // 1s, 2s
-                    try await Task.sleep(nanoseconds: delay)
-                }
-            }
-        }
-
-        throw ImageGenerationError.creationFailed(lastError?.localizedDescription ?? "Unknown error after \(maxRetries + 1) attempts")
+        numberOfImages: Int
+    ) async throws -> [GeneratedDreamImage] {
+        // Ignore numberOfImages - AI Visual Director decides based on story
+        return try await generateSequenceImages(from: text, style: style)
     }
 
-    /// Generate a single image from a prompt
-    @available(iOS 18.4, *)
+    /// Generate flat vector style fallback scenes
+    private func generateFallbackScenes(count: Int) -> [String] {
+        let vectorStyle = "flat vector comic panel, graphic design style, thick black vector outlines, simple geometric shapes, two-dimensional, no depth, no shading, solid flat colors only, high contrast color blocks, clean poster-like composition, bold centered subject, minimal background, symbolic silhouette characters, screen print look, no gradients, no lighting, no texture, no realism, no 3D"
+
+        let fallbacks = [
+            "Silhouette figure running through doorway, SMASH! text, yellow and orange background, \(vectorStyle)",
+            "Dark shadow shape with lightning bolt, purple and blue color blocks, \(vectorStyle)",
+            "Explosion circle with BOOM! text, red and orange shapes, centered composition, \(vectorStyle)",
+            "Standing figure with cape, arms raised, POW! text, gold and blue background, \(vectorStyle)",
+            "Monster silhouette roaring, CRASH! text, green and black shapes, \(vectorStyle)",
+            "Figure landing pose, BAM! text, red and yellow color blocks, \(vectorStyle)"
+        ]
+
+        return (0..<count).map { fallbacks[$0 % fallbacks.count] }
+    }
+
+    /// Generate a single image from a prompt using MLX
     func generateSingleImage(
         prompt: String,
         style: DreamImageStyle
@@ -232,225 +273,95 @@ class ImageGenerationService: ObservableObject {
         isCancelled = false
         defer { isGenerating = false }
 
-        return try await generateSingleImageWithRetry(
+        // Check if model is loaded
+        if !mlxService.isModelLoaded {
+            statusMessage = "Loading MLX model..."
+            try await mlxService.loadModel()
+        }
+
+        let mlxImage = try await mlxService.generateImage(
             prompt: prompt,
-            style: style,
-            sequenceIndex: 0,
-            maxRetries: 2
+            style: style.mlxStyle,
+            sequenceIndex: 0
+        )
+
+        return GeneratedDreamImage(from: mlxImage)
+    }
+
+    // MARK: - Comic Page Layout
+
+    /// Layout style for combining images into a comic page
+    enum ComicLayoutStyle {
+        case vertical       // Stacked vertically
+        case grid           // Grid layout
+        case dynamic        // Varied panel sizes for visual interest
+        case widescreen     // Wide horizontal panels
+    }
+
+    /// Combine multiple images into a single comic page
+    func createComicPage(
+        from images: [GeneratedDreamImage],
+        style: ComicLayoutStyle = .dynamic,
+        pageSize: CGSize = CGSize(width: 1024, height: 1536)
+    ) -> UIImage? {
+        let uiImages = images.compactMap { $0.uiImage }
+        guard !uiImages.isEmpty else { return nil }
+
+        // Use MLX comic panel layout
+        let mlxLayoutStyle: MLXComicPanelLayout.LayoutStyle
+        switch style {
+        case .vertical: mlxLayoutStyle = .vertical
+        case .grid: mlxLayoutStyle = .grid
+        case .dynamic: mlxLayoutStyle = .dynamic
+        case .widescreen: mlxLayoutStyle = .widescreen
+        }
+
+        return MLXComicPanelLayout.createComicPage(
+            images: uiImages,
+            style: mlxLayoutStyle,
+            pageSize: pageSize
         )
     }
 
-    /// Split dream text into scenes for sequence generation
-    private func splitIntoScenes(text: String, count: Int) -> [String] {
-        let sentences = text.components(separatedBy: CharacterSet(charactersIn: ".!?"))
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+    // MARK: - Backend Upload
 
-        guard sentences.count > 0 else { return [convertToScenicPrompt(text)] }
-
-        if sentences.count <= count {
-            return sentences.map { convertToScenicPrompt($0) }
+    /// Upload generated images to the backend
+    /// Called after images are generated, if user is signed in
+    func uploadImagesToBackend(
+        images: [GeneratedDreamImage],
+        rewrittenDreamId: String,
+        style: DreamImageStyle
+    ) async throws -> APIVisualization {
+        guard AuthManager.shared.isAuthenticated else {
+            throw ImageGenerationError.notSupported
         }
 
-        // Group sentences into scenes
-        let sentencesPerScene = max(1, sentences.count / count)
-        var scenes: [String] = []
+        statusMessage = "Uploading to cloud..."
 
-        for i in 0..<count {
-            let startIndex = i * sentencesPerScene
-            let endIndex = (i == count - 1) ? sentences.count : min(startIndex + sentencesPerScene, sentences.count)
-            if startIndex < sentences.count {
-                let sceneText = sentences[startIndex..<endIndex].joined(separator: ". ")
-                scenes.append(convertToScenicPrompt(sceneText))
-            }
+        // Convert images to base64 URLs
+        var imageUrls: [String] = []
+        for image in images {
+            let url = try await BackendService.shared.uploadImage(
+                data: image.imageData,
+                filename: "panel_\(image.sequenceIndex).png"
+            )
+            imageUrls.append(url)
         }
 
-        return scenes
+        // Create visualization on backend
+        let visualization = try await BackendService.shared.createVisualization(
+            rewrittenDreamId: rewrittenDreamId,
+            visualizationType: "comic_panels",
+            imageAssets: imageUrls,
+            status: "completed"
+        )
+
+        statusMessage = ""
+        return visualization
     }
 
-    /// Convert first-person dream text to a scenic description without people
-    /// Image Playground requires a face image to generate people, so we focus on scenery
-    private func convertToScenicPrompt(_ text: String) -> String {
-        // Extract scenic keywords from the text
-        let scenicElements = extractScenicElements(from: text)
-
-        if scenicElements.isEmpty {
-            // Fallback to generic peaceful scene
-            return "A peaceful dreamscape with soft light and serene atmosphere"
-        }
-
-        // Build a scenic prompt from extracted elements
-        let prompt = "A dreamy landscape featuring " + scenicElements.joined(separator: ", ")
-        return prompt
-    }
-
-    /// Extract only scenic/environmental elements from text, removing all human references
-    private func extractScenicElements(from text: String) -> [String] {
-        let lowercased = text.lowercased()
-        var elements: [String] = []
-
-        // Nature elements to look for
-        let natureKeywords: [String: String] = [
-            "forest": "a mystical forest",
-            "tree": "towering trees",
-            "trees": "towering trees",
-            "garden": "a lush garden",
-            "flower": "colorful flowers",
-            "flowers": "blooming flowers",
-            "ocean": "a vast ocean",
-            "sea": "a calm sea",
-            "beach": "a sandy beach",
-            "wave": "gentle waves",
-            "waves": "rolling waves",
-            "mountain": "majestic mountains",
-            "mountains": "snow-capped mountains",
-            "hill": "rolling hills",
-            "hills": "green hills",
-            "sky": "an expansive sky",
-            "cloud": "fluffy clouds",
-            "clouds": "drifting clouds",
-            "star": "twinkling stars",
-            "stars": "a starry night",
-            "moon": "a glowing moon",
-            "sun": "warm sunlight",
-            "sunrise": "a golden sunrise",
-            "sunset": "a vibrant sunset",
-            "rain": "gentle rain",
-            "snow": "softly falling snow",
-            "river": "a flowing river",
-            "lake": "a serene lake",
-            "pond": "a tranquil pond",
-            "waterfall": "a cascading waterfall",
-            "meadow": "a peaceful meadow",
-            "field": "an open field",
-            "valley": "a verdant valley",
-            "cave": "a mysterious cave",
-            "island": "a tropical island",
-            "desert": "golden sand dunes",
-            "jungle": "a dense jungle",
-            "path": "a winding path",
-            "road": "a scenic road",
-            "bridge": "an arching bridge"
-        ]
-
-        // Weather/atmosphere elements
-        let atmosphereKeywords: [String: String] = [
-            "fog": "misty fog",
-            "mist": "ethereal mist",
-            "rainbow": "a bright rainbow",
-            "storm": "dramatic storm clouds",
-            "lightning": "distant lightning",
-            "thunder": "stormy skies",
-            "wind": "windswept landscapes",
-            "aurora": "northern lights",
-            "twilight": "twilight glow"
-        ]
-
-        // Time of day
-        let timeKeywords: [String: String] = [
-            "night": "nighttime atmosphere",
-            "morning": "early morning light",
-            "evening": "evening ambiance",
-            "dawn": "the break of dawn",
-            "dusk": "dusky twilight"
-        ]
-
-        // Places/structures (without people)
-        let placeKeywords: [String: String] = [
-            "house": "a cozy cottage",
-            "home": "a warm dwelling",
-            "castle": "a grand castle",
-            "tower": "a tall tower",
-            "palace": "an ornate palace",
-            "temple": "an ancient temple",
-            "church": "a peaceful sanctuary",
-            "city": "a distant cityscape",
-            "village": "a quaint village",
-            "room": "a cozy interior",
-            "window": "light through a window",
-            "door": "an inviting doorway",
-            "stairs": "winding stairs",
-            "garden": "a blooming garden",
-            "park": "a serene park",
-            "street": "a quiet street",
-            "library": "shelves of books",
-            "school": "an old building"
-        ]
-
-        // Colors and qualities
-        let qualityKeywords: [String: String] = [
-            "golden": "golden light",
-            "silver": "silver shimmer",
-            "blue": "shades of blue",
-            "green": "lush greenery",
-            "purple": "purple hues",
-            "pink": "soft pink tones",
-            "red": "warm red accents",
-            "white": "pristine white",
-            "dark": "mysterious shadows",
-            "bright": "bright illumination",
-            "warm": "warm glow",
-            "cool": "cool tones",
-            "peaceful": "peaceful serenity",
-            "calm": "calming atmosphere",
-            "magical": "magical sparkles",
-            "dreamy": "dreamlike quality",
-            "soft": "soft lighting",
-            "gentle": "gentle ambiance",
-            "beautiful": "natural beauty",
-            "quiet": "quiet stillness"
-        ]
-
-        // Objects
-        let objectKeywords: [String: String] = [
-            "light": "ethereal light",
-            "lantern": "glowing lanterns",
-            "candle": "candlelight",
-            "fire": "a warm fire",
-            "flame": "dancing flames",
-            "mirror": "a reflective mirror",
-            "book": "old books",
-            "key": "an ornate key",
-            "clock": "an antique clock",
-            "boat": "a drifting boat",
-            "ship": "a sailing ship",
-            "balloon": "floating balloons",
-            "bird": "birds in flight",
-            "butterfly": "colorful butterflies",
-            "cat": "a curious cat",
-            "dog": "a friendly dog",
-            "horse": "a majestic horse",
-            "fish": "swimming fish",
-            "deer": "a gentle deer",
-            "rabbit": "a small rabbit",
-            "owl": "a wise owl"
-        ]
-
-        // Check all keyword categories
-        let allKeywords = [natureKeywords, atmosphereKeywords, timeKeywords,
-                          placeKeywords, qualityKeywords, objectKeywords]
-
-        var foundElements = Set<String>()
-
-        for keywords in allKeywords {
-            for (keyword, scenic) in keywords {
-                if lowercased.contains(keyword) && !foundElements.contains(scenic) {
-                    foundElements.insert(scenic)
-                    elements.append(scenic)
-                    if elements.count >= 4 {
-                        return elements
-                    }
-                }
-            }
-        }
-
-        // If we found very few elements, add some default dreamy qualities
-        if elements.count < 2 {
-            elements.append("soft ethereal light")
-            elements.append("peaceful atmosphere")
-        }
-
-        return elements
+    /// Check if backend upload is available
+    var canUploadToBackend: Bool {
+        AuthManager.shared.isAuthenticated
     }
 }
-

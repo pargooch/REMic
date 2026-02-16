@@ -44,14 +44,7 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showSettings) {
                 NavigationView {
-                    NotificationSettingsView()
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") {
-                                    showSettings = false
-                                }
-                            }
-                        }
+                    SettingsView()
                 }
             }
         }
