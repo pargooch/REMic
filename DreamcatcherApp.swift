@@ -5,15 +5,30 @@ import UserNotifications
 struct DreamCatcherApp: App {
     @StateObject var store = DreamStore()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @State private var landingOpacity: Double = 1.0
+    @State private var landingFinished = false
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(store)
-                .onAppear {
-                    // Initialize notification manager
-                    _ = NotificationManager.shared
+            ZStack {
+                ContentView()
+                    .environmentObject(store)
+                    .onAppear {
+                        _ = NotificationManager.shared
+                    }
+
+                if !landingFinished {
+                    LandingAnimationView {
+                        withAnimation(.easeOut(duration: 2.0)) {
+                            landingOpacity = 0
+                        } completion: {
+                            landingFinished = true
+                        }
+                    }
+                    .opacity(landingOpacity)
+                    .zIndex(1)
                 }
+            }
         }
     }
 }

@@ -7,7 +7,6 @@ struct DreamImageSection: View {
     let store: DreamStore
 
     @StateObject private var imageService = ImageGenerationService()
-    @State private var selectedStyle: DreamImageStyle = .comicBook
     @State private var showComicViewer = false
     @State private var showLegacyGallery = false
     @State private var errorMessage: String?
@@ -109,12 +108,6 @@ struct DreamImageSection: View {
         .sheet(isPresented: $showLegacyGallery) {
             DreamImageGalleryView(dream: dream)
         }
-        .onAppear {
-            if let styleString = dream.imageStyle,
-               let style = DreamImageStyle.allCases.first(where: { $0.rawValue == styleString }) {
-                selectedStyle = style
-            }
-        }
     }
 
     // MARK: - Comic Page Preview
@@ -133,8 +126,6 @@ struct DreamImageSection: View {
             }
 
             SignUpPromptBanner(isVisible: $showSignUpBanner)
-
-            stylePicker
 
             if imageService.isGenerating {
                 generatingView
@@ -158,8 +149,6 @@ struct DreamImageSection: View {
             DreamImagePreview(images: dream.sortedImages)
 
             SignUpPromptBanner(isVisible: $showSignUpBanner)
-
-            stylePicker
 
             if imageService.isGenerating {
                 generatingView
@@ -195,8 +184,6 @@ struct DreamImageSection: View {
 
     private var generateView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            stylePicker
-
             if imageService.isGenerating {
                 generatingView
             } else {
@@ -213,28 +200,6 @@ struct DreamImageSection: View {
     }
 
     // MARK: - Shared Components
-
-    private var stylePicker: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("STYLE")
-                .font(ComicTheme.Typography.sectionHeader(11))
-                .tracking(1.5)
-                .foregroundColor(ComicTheme.Colors.crimsonRed)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(DreamImageStyle.allCases) { style in
-                        StyleChip(
-                            style: style,
-                            isSelected: selectedStyle == style
-                        ) {
-                            selectedStyle = style
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     private var generatingView: some View {
         VStack(spacing: 14) {
@@ -320,13 +285,11 @@ struct DreamImageSection: View {
 
                 let comicPages = try await imageService.generateComicPage(
                     from: rewrittenText,
-                    style: selectedStyle,
                     dreamerProfile: profile
                 )
 
                 var updated = dream
                 updated.comicPages = comicPages
-                updated.imageStyle = selectedStyle.rawValue
                 store.updateDream(updated)
 
                 if !AuthManager.shared.isAuthenticated {
@@ -338,42 +301,6 @@ struct DreamImageSection: View {
                 errorMessage = error.localizedDescription
             }
         }
-    }
-}
-
-// MARK: - Style Chip
-
-struct StyleChip: View {
-    let style: DreamImageStyle
-    let isSelected: Bool
-    let action: () -> Void
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: style.icon)
-                    .font(.system(size: 14, weight: .bold))
-                Text(style.rawValue.uppercased())
-                    .font(.system(size: 12, weight: .bold))
-                    .tracking(0.5)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(isSelected ? ComicTheme.Colors.crimsonRed : Color.clear)
-            .foregroundStyle(isSelected ? .white : .primary)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(
-                        isSelected ? ComicTheme.Colors.crimsonRed : ComicTheme.panelBorderColor(colorScheme).opacity(0.4),
-                        lineWidth: isSelected ? 2 : 1
-                    )
-            )
-            .scaleEffect(isSelected ? 1.0 : 0.97)
-            .animation(.spring(response: 0.2), value: isSelected)
-        }
-        .buttonStyle(.plain)
     }
 }
 

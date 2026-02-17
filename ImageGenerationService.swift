@@ -160,7 +160,7 @@ class ImageGenerationService: ObservableObject {
     /// Local path: local layout planning → MLX render → ComicPageCompositor
     func generateComicPage(
         from text: String,
-        style: DreamImageStyle,
+        style: DreamImageStyle = .comicBook,
         dreamerProfile: DreamerProfile? = nil
     ) async throws -> [ComicPageImage] {
         currentTask?.cancel()
@@ -178,7 +178,7 @@ class ImageGenerationService: ObservableObject {
         }
 
         if AuthManager.shared.isAuthenticated {
-            return try await generateComicPageWithBackend(text: text, style: style, dreamerProfile: dreamerProfile)
+            return try await generateComicPageWithBackend(text: text, dreamerProfile: dreamerProfile)
         } else {
             return try await generateComicPageLocally(text: text, style: style, dreamerProfile: dreamerProfile)
         }
@@ -188,7 +188,6 @@ class ImageGenerationService: ObservableObject {
 
     private func generateComicPageWithBackend(
         text: String,
-        style: DreamImageStyle,
         dreamerProfile: DreamerProfile?
     ) async throws -> [ComicPageImage] {
         statusMessage = "Painting your dream..."
@@ -196,7 +195,6 @@ class ImageGenerationService: ObservableObject {
 
         let response = try await BackendService.shared.generateComicPage(
             rewrittenText: text,
-            style: style.rawValue,
             dreamerProfile: dreamerProfile
         )
 

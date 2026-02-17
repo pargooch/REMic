@@ -279,11 +279,10 @@ class BackendService {
     // MARK: - Single-Shot Comic Page Generation
 
     /// One request → backend handles LLM layout + image generation → returns complete page(s)
-    func generateComicPage(rewrittenText: String, style: String, dreamerProfile: DreamerProfile? = nil) async throws -> ComicPageGenerationResponse {
+    func generateComicPage(rewrittenText: String, dreamerProfile: DreamerProfile? = nil) async throws -> ComicPageGenerationResponse {
         let url = try makeURL(path: "ai/generate-comic-page")
         var body: [String: Any] = [
-            "rewritten_text": rewrittenText,
-            "style": style
+            "rewritten_text": rewrittenText
         ]
         if let profile = dreamerProfile {
             var profileDict: [String: Any] = [:]
