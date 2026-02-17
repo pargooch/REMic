@@ -12,6 +12,8 @@ struct DreamDetailView: View {
     // Editing states
     @State private var isEditing = false
     @State private var editedText = ""
+    @State private var isEditingOriginal = false
+    @State private var editedOriginalText = ""
 
     let tones = ["happy", "funny", "hopeful", "calm", "positive"]
 
@@ -21,8 +23,55 @@ struct DreamDetailView: View {
 
                 // Original dream
                 ComicPanelCard(titleBanner: "Original Dream", bannerColor: ComicTheme.Colors.deepPurple) {
-                    Text(dream.originalText)
-                        .font(.body)
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Spacer()
+                            Button {
+                                if isEditingOriginal {
+                                    saveOriginalText()
+                                } else {
+                                    editedOriginalText = dream.originalText
+                                    isEditingOriginal = true
+                                }
+                            } label: {
+                                Label(isEditingOriginal ? "Save" : "Edit", systemImage: isEditingOriginal ? "checkmark" : "pencil")
+                            }
+                            .buttonStyle(.comicSecondary)
+                            .frame(maxWidth: 120)
+
+                            if isEditingOriginal {
+                                Button {
+                                    isEditingOriginal = false
+                                    editedOriginalText = ""
+                                } label: {
+                                    Label("Cancel", systemImage: "xmark")
+                                }
+                                .buttonStyle(.comicDestructive)
+                                .frame(maxWidth: 120)
+                            }
+                        }
+
+                        if isEditingOriginal {
+                            ZStack(alignment: .topLeading) {
+                                Text(editedOriginalText.isEmpty ? " " : editedOriginalText)
+                                    .font(.body)
+                                    .padding(12)
+                                    .opacity(0)
+
+                                TextEditor(text: $editedOriginalText)
+                                    .font(.body)
+                                    .scrollContentBackground(.hidden)
+                                    .scrollDisabled(true)
+                                    .padding(6)
+                            }
+                            .frame(minHeight: 100)
+                            .background(Color(.systemBackground).opacity(0.5))
+                            .cornerRadius(8)
+                        } else {
+                            Text(dream.originalText)
+                                .font(.body)
+                        }
+                    }
                 }
 
                 // Show rewritten dream if available
@@ -212,6 +261,15 @@ struct DreamDetailView: View {
         store.updateDream(updated)
         isEditing = false
         editedText = ""
+    }
+
+    func saveOriginalText() {
+        guard !editedOriginalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        var updated = dream
+        updated.originalText = editedOriginalText
+        store.updateDream(updated)
+        isEditingOriginal = false
+        editedOriginalText = ""
     }
 }
 
