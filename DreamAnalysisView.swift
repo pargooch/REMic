@@ -163,7 +163,7 @@ struct DreamAnalysisView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Text("\(summary.dreams_analyzed)")
+                Text("\(store.dreams.count)")
                     .font(.system(size: 36, weight: .black))
                     .foregroundColor(ComicTheme.Colors.boldBlue.opacity(0.3))
                     .overlay(alignment: .bottom) {

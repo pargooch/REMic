@@ -59,12 +59,6 @@ struct TrendChartView: View {
         return emotion == highlighted ? 3.5 : 1.5
     }
 
-    /// Area gradient opacity for a given emotion based on highlight state
-    private func areaOpacityForEmotion(_ emotion: String) -> (top: Double, bottom: Double) {
-        guard let highlighted = highlightedEmotion else { return (0.2, 0.02) }
-        return emotion == highlighted ? (0.25, 0.05) : (0.03, 0.0)
-    }
-
     /// Point size for a given emotion based on highlight and selection state
     private func pointSizeForEmotion(_ emotion: String, point: TrendDataPoint) -> Double {
         let isSelected = isPointSelected(point)
@@ -144,23 +138,6 @@ struct TrendChartView: View {
                         lineCap: .round,
                         lineJoin: .round
                     ))
-                    .interpolationMethod(.catmullRom)
-
-                    AreaMark(
-                        x: .value("Date", point.parsedDate ?? Date()),
-                        y: .value("Intensity", point.intensity),
-                        series: .value("Emotion", emotion)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                colorForEmotion(emotion).opacity(areaOpacityForEmotion(emotion).top),
-                                colorForEmotion(emotion).opacity(areaOpacityForEmotion(emotion).bottom)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
                     .interpolationMethod(.catmullRom)
 
                     PointMark(
