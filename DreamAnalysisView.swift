@@ -2,8 +2,12 @@ import SwiftUI
 import Charts
 
 struct DreamAnalysisView: View {
+    @EnvironmentObject var store: DreamStore
     @Environment(DreamAnalysisService.self) private var analysisService
     @Environment(\.dismiss) private var dismiss
+    @State private var isReanalyzing = false
+    @State private var reanalyzeProgress = 0
+    @State private var reanalyzeTotal = 0
 
     var body: some View {
         @Bindable var service = analysisService
@@ -88,6 +92,25 @@ struct DreamAnalysisView: View {
                     .foregroundStyle(ComicTheme.Colors.hotPink)
                     .fontWeight(.bold)
             }
+            // TEMP: Re-analyze all dreams with correct entry dates
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    Task { await reanalyzeAllDreams() }
+                } label: {
+                    if isReanalyzing {
+                        HStack(spacing: 4) {
+                            ProgressView()
+                                .controlSize(.mini)
+                            Text("\(reanalyzeProgress)/\(reanalyzeTotal)")
+                                .font(.caption2.bold())
+                        }
+                    } else {
+                        Image(systemName: "arrow.clockwise.circle")
+                    }
+                }
+                .disabled(isReanalyzing)
+                .foregroundStyle(ComicTheme.Colors.deepPurple)
+            }
         }
         .onChange(of: analysisService.selectedPeriod) { _, newPeriod in
             Task {
@@ -98,6 +121,30 @@ struct DreamAnalysisView: View {
         .task {
             await analysisService.loadData()
         }
+    }
+
+    // MARK: - TEMP: Bulk Re-analyze
+
+    private func reanalyzeAllDreams() async {
+        let dreamsToAnalyze = store.dreams.filter { !$0.originalText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        reanalyzeTotal = dreamsToAnalyze.count
+        reanalyzeProgress = 0
+        isReanalyzing = true
+        defer { isReanalyzing = false }
+
+        for dream in dreamsToAnalyze {
+            do {
+                let result = try await analysisService.analyzeDream(text: dream.originalText, dreamDate: dream.date)
+                var updated = dream
+                updated.analysis = result
+                store.updateDream(updated)
+            } catch {
+                print("Re-analyze failed for dream \(dream.id): \(error)")
+            }
+            reanalyzeProgress += 1
+        }
+
+        await analysisService.loadData()
     }
 
     // MARK: - Summary Section

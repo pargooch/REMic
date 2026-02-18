@@ -6,6 +6,7 @@ struct NewDreamView: View {
     @Environment(DreamAnalysisService.self) private var analysisService
 
     @State private var dreamText = ""
+    @State private var dreamDate = Date()
     @State private var speechService = SpeechRecognitionService()
 
     var body: some View {
@@ -67,15 +68,28 @@ struct NewDreamView: View {
                             .speechBubble()
                     }
 
+                    // Dream date picker
+                    ComicPanelCard(bannerColor: ComicTheme.Colors.goldenYellow) {
+                        DatePicker(
+                            "When did you see this dream?",
+                            selection: $dreamDate,
+                            in: ...Date(),
+                            displayedComponents: .date
+                        )
+                        .font(ComicTheme.Typography.speechBubble(13))
+                        .datePickerStyle(.compact)
+                    }
+
                     Button {
-                        let dream = Dream(originalText: dreamText)
+                        let dream = Dream(originalText: dreamText, date: dreamDate)
                         store.addDream(dream)
                         // Fire-and-forget analysis if authenticated
                         if AuthManager.shared.isAuthenticated {
                             let dreamId = dream.id
                             let text = dreamText
+                            let entryDate = dream.date
                             Task {
-                                if let result = try? await analysisService.analyzeDream(text: text) {
+                                if let result = try? await analysisService.analyzeDream(text: text, dreamDate: entryDate) {
                                     if var updated = store.dreams.first(where: { $0.id == dreamId }) {
                                         updated.analysis = result
                                         store.updateDream(updated)

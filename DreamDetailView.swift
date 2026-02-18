@@ -24,6 +24,25 @@ struct DreamDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
 
+                // Dream date
+                ComicPanelCard(bannerColor: ComicTheme.Colors.goldenYellow) {
+                    DatePicker(
+                        "Dream date",
+                        selection: Binding(
+                            get: { dream.date },
+                            set: { newDate in
+                                var updated = dream
+                                updated.date = newDate
+                                store.updateDream(updated)
+                            }
+                        ),
+                        in: ...Date(),
+                        displayedComponents: .date
+                    )
+                    .font(ComicTheme.Typography.speechBubble(13))
+                    .datePickerStyle(.compact)
+                }
+
                 // Original dream
                 ComicPanelCard(titleBanner: "Original Dream", bannerColor: ComicTheme.Colors.deepPurple) {
                     VStack(alignment: .leading, spacing: 12) {
@@ -267,7 +286,7 @@ struct DreamDetailView: View {
             // Trigger analysis if not yet analyzed and user is authenticated
             if dream.analysis == nil && AuthManager.shared.isAuthenticated {
                 Task {
-                    if let result = try? await analysisService.analyzeDream(text: dream.originalText) {
+                    if let result = try? await analysisService.analyzeDream(text: dream.originalText, dreamDate: dream.date) {
                         var updated = dream
                         updated.analysis = result
                         store.updateDream(updated)

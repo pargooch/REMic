@@ -352,9 +352,14 @@ class BackendService {
 
     // MARK: - Dream Analysis
 
-    func analyzeDream(text: String) async throws -> DreamAnalysisResponse {
+    func analyzeDream(text: String, dreamDate: Date) async throws -> DreamAnalysisResponse {
         let url = try makeURL(path: "dream-analysis")
-        let body: [String: Any] = ["text": text]
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        let body: [String: Any] = [
+            "text": text,
+            "dream_date": formatter.string(from: dreamDate)
+        ]
         let data = try JSONSerialization.data(withJSONObject: body)
         let request = try makeRequest(url: url, method: "POST", body: data, requiresAuth: true)
         return try await send(request, as: DreamAnalysisResponse.self)

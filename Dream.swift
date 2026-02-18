@@ -14,12 +14,12 @@ struct Dream: Identifiable, Codable {
     var includeAvatarInComic: Bool?
     var analysis: DreamAnalysisResponse?
 
-    init(originalText: String) {
+    init(originalText: String, date: Date = Date()) {
         self.id = UUID()
         self.originalText = originalText
         self.rewrittenText = nil
         self.tone = nil
-        self.date = Date()
+        self.date = date
         self.generatedImages = nil
         self.imageStyle = nil
         self.comicPages = nil

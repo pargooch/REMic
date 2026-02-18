@@ -33,13 +33,13 @@ final class DreamAnalysisService {
     // MARK: - API Methods
 
     @MainActor
-    func analyzeDream(text: String) async throws -> DreamAnalysisResponse {
+    func analyzeDream(text: String, dreamDate: Date) async throws -> DreamAnalysisResponse {
         isAnalyzing = true
         analysisError = nil
         defer { isAnalyzing = false }
 
         do {
-            let result = try await BackendService.shared.analyzeDream(text: text)
+            let result = try await BackendService.shared.analyzeDream(text: text, dreamDate: dreamDate)
             return result
         } catch {
             analysisError = error.localizedDescription
