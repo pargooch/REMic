@@ -17,6 +17,8 @@ struct DreamDetailView: View {
     @State private var editedOriginalText = ""
     @State private var ttsService = TextToSpeechService()
     @State private var hasPreselectedTone = false
+    @State private var showDeleteConfirmation = false
+    @Environment(\.dismiss) private var dismiss
 
     let tones = ["happy", "funny", "hopeful", "calm", "positive"]
 
@@ -266,12 +268,30 @@ struct DreamDetailView: View {
 
                 // Per-dream notification management
                 DreamNotificationSection(dreamId: dream.id, hasRewrite: dream.rewrittenText != nil)
+
+                // Delete dream
+                Button(role: .destructive) {
+                    showDeleteConfirmation = true
+                } label: {
+                    Label("Delete Dream", systemImage: "trash")
+                }
+                .buttonStyle(.comicDestructive)
+                .padding(.top, 8)
             }
             .padding()
         }
         .halftoneBackground()
         .navigationTitle("Dream")
         .navigationBarTitleDisplayMode(.inline)
+        .confirmationDialog("Delete this dream?", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                store.deleteDream(dream)
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently remove this dream and all its content.")
+        }
         .onAppear {
             if let currentTone = dream.tone {
                 selectedTone = currentTone

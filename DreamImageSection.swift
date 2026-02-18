@@ -29,10 +29,8 @@ struct DreamImageSection: View {
                     if isAvailable && !dream.hasComicPages && !dream.hasImages {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 4) {
-                                Image(systemName: "square.stack.3d.up.fill")
-                                    .font(.caption2)
-                                Text("Comic Book Style")
-                                    .font(.caption)
+                                
+                             
                             }
                             Text("AI creates a comic page from your dream")
                                 .font(.caption2)

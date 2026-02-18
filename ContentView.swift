@@ -5,6 +5,17 @@ struct ContentView: View {
     @State private var showNewDream = false
     @State private var showSettings = false
     @State private var showAnalysis = false
+    @State private var searchText = ""
+
+    private var filteredDreams: [Dream] {
+        guard !searchText.isEmpty else { return store.dreams }
+        let query = searchText.lowercased()
+        return store.dreams.filter {
+            $0.originalText.lowercased().contains(query) ||
+            ($0.rewrittenText?.lowercased().contains(query) ?? false) ||
+            ($0.tone?.lowercased().contains(query) ?? false)
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -12,8 +23,13 @@ struct ContentView: View {
                 LazyVStack(spacing: ComicTheme.Dimensions.gutterWidth) {
                     if store.dreams.isEmpty {
                         emptyState
+                    } else if filteredDreams.isEmpty {
+                        Text("No dreams match your search")
+                            .font(ComicTheme.Typography.speechBubble(13))
+                            .foregroundColor(.secondary)
+                            .padding(.top, 40)
                     } else {
-                        ForEach(store.dreams) { dream in
+                        ForEach(filteredDreams) { dream in
                             SwipeToDeleteWrapper {
                                 NavigationLink {
                                     DreamDetailView(dream: dream)
@@ -33,7 +49,8 @@ struct ContentView: View {
                 .padding()
             }
             .halftoneBackground()
-            .navigationTitle("Dreamcatcher")
+            .navigationTitle("Dreams")
+            .searchable(text: $searchText, prompt: "Search dreams...")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     HStack(spacing: 12) {

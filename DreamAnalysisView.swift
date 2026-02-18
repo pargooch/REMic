@@ -163,15 +163,14 @@ struct DreamAnalysisView: View {
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                Text("\(store.dreams.count)")
-                    .font(.system(size: 36, weight: .black))
-                    .foregroundColor(ComicTheme.Colors.boldBlue.opacity(0.3))
-                    .overlay(alignment: .bottom) {
-                        Text("dreams")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.secondary)
-                            .offset(y: 14)
-                    }
+                VStack(spacing: 2) {
+                    Text("\(store.dreams.count)")
+                        .font(.system(size: 36, weight: .black))
+                        .foregroundColor(ComicTheme.Colors.boldBlue.opacity(0.3))
+                    Text("dreams")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.secondary)
+                }
             }
         }
 
