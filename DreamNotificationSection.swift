@@ -132,8 +132,8 @@ struct DreamReminderRow: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        .background(Color(.systemBackground).opacity(0.5))
-        .cornerRadius(8)
+        .background(ComicTheme.Semantic.cardSurface(colorScheme))
+        .cornerRadius(ComicTheme.Dimensions.buttonCornerRadius)
     }
 }
 

@@ -12,6 +12,7 @@ struct DreamImageSection: View {
     @State private var errorMessage: String?
     @State private var showSignUpBanner = false
     @AppStorage("dreamIncludeAvatar") private var includeAvatar = true
+    @Environment(\.colorScheme) private var colorScheme
 
     private var isAvailable: Bool {
         ImageGenerationService.isAvailable
@@ -81,11 +82,11 @@ struct DreamImageSection: View {
                             .tint(ComicTheme.Colors.deepPurple)
                     }
                     .padding(10)
-                    .background(.regularMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .background(ComicTheme.Semantic.cardSurface(colorScheme))
+                    .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(ComicTheme.Colors.deepPurple.opacity(0.3), lineWidth: 1.5)
+                        RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                            .stroke(ComicTheme.Colors.deepPurple.opacity(0.3), lineWidth: 2.0)
                     )
                 }
 
@@ -233,11 +234,11 @@ struct DreamImageSection: View {
                     .foregroundColor(.secondary)
             }
             .padding(12)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .background(ComicTheme.Semantic.cardSurface(colorScheme))
+            .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(ComicTheme.Colors.hotPink.opacity(0.3), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                    .stroke(ComicTheme.Colors.hotPink.opacity(0.3), lineWidth: 2.0)
             )
         }
     }
@@ -391,7 +392,7 @@ struct DreamImageGalleryView: View {
                     }
                     .padding()
                 }
-                .background(.regularMaterial)
+                .background(ComicTheme.Semantic.cardSurface(.light))
             }
             .halftoneBackground()
             .navigationTitle("Dream Sequence")
@@ -443,11 +444,11 @@ struct SignUpPromptBanner: View {
                 .buttonStyle(.plain)
             }
             .padding(12)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .background(ComicTheme.Semantic.cardSurface(colorScheme))
+            .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(ComicTheme.Colors.emeraldGreen.opacity(0.3), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                    .stroke(ComicTheme.Colors.emeraldGreen.opacity(0.3), lineWidth: 2.0)
             )
         }
     }

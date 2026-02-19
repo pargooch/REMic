@@ -72,6 +72,7 @@ struct NotificationTemplateRow: View {
     let category: NotificationCategory
     @StateObject private var notificationManager = NotificationManager.shared
     @State private var showingScheduleSheet = false
+    @Environment(\.colorScheme) private var colorScheme
 
     private var settings: NotificationSettings? {
         notificationManager.getSettings(for: category)
@@ -85,7 +86,7 @@ struct NotificationTemplateRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: category.icon)
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(ComicTheme.Palette.heroBlue)
                     .frame(width: 24)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -123,8 +124,8 @@ struct NotificationTemplateRow: View {
                     .foregroundColor(.secondary)
                     .padding(.vertical, 4)
                     .padding(.horizontal, 8)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(6)
+                    .background(ComicTheme.Semantic.cardSurface(colorScheme))
+                    .cornerRadius(ComicTheme.Dimensions.badgeCornerRadius)
                 }
             }
         }
@@ -288,6 +289,7 @@ struct DayToggleButton: View {
     let dayName: String
     let isSelected: Bool
     let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button(action: action) {
@@ -296,9 +298,9 @@ struct DayToggleButton: View {
                 .fontWeight(isSelected ? .bold : .regular)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(isSelected ? Color.accentColor : Color(.systemGray5))
+                .background(isSelected ? ComicTheme.Palette.heroBlue : ComicTheme.Semantic.cardSurface(colorScheme))
                 .foregroundColor(isSelected ? .white : .primary)
-                .cornerRadius(8)
+                .cornerRadius(ComicTheme.Dimensions.badgeCornerRadius)
         }
         .buttonStyle(.plain)
     }

@@ -36,7 +36,7 @@ struct ProfilePictureView: View {
                 Image(systemName: "pencil.circle.fill")
                     .font(.system(size: size * 0.3))
                     .foregroundColor(ComicTheme.Colors.boldBlue)
-                    .background(Circle().fill(.white).padding(2))
+                    .background(Circle().fill(ComicTheme.Semantic.cardSurface(colorScheme)).padding(2))
             }
         }
         .onTapGesture {

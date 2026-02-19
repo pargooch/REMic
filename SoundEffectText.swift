@@ -3,8 +3,8 @@ import SwiftUI
 struct SoundEffectText: View {
     let text: String
     var rotation: Double = -5
-    var fillColor: Color = ComicTheme.Colors.goldenYellow
-    var strokeColor: Color = ComicTheme.Colors.panelBorder
+    var fillColor: Color = ComicTheme.Palette.goldenYellow
+    var strokeColor: Color = ComicTheme.Palette.inkBlack
     var fontSize: CGFloat = 36
 
     @State private var isAnimated = false
@@ -13,8 +13,6 @@ struct SoundEffectText: View {
         Text(text)
             .font(ComicTheme.Typography.soundEffect(fontSize))
             .foregroundStyle(fillColor)
-            .shadow(color: strokeColor, radius: 0, x: 2, y: 2)
-            .shadow(color: strokeColor, radius: 0, x: -1, y: -1)
             .rotationEffect(.degrees(rotation))
             .scaleEffect(isAnimated ? 1.0 : 0.3)
             .opacity(isAnimated ? 1.0 : 0)

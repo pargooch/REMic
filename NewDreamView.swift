@@ -101,7 +101,7 @@ struct NewDreamView: View {
                     } label: {
                         Label("Save Dream", systemImage: "checkmark.circle.fill")
                     }
-                    .buttonStyle(.comicPrimary(color: ComicTheme.Colors.emeraldGreen))
+                    .buttonStyle(.comicPrimary(color: ComicTheme.Colors.boldBlue))
                     .disabled(dreamText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
                 .padding()

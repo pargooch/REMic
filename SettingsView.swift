@@ -157,11 +157,11 @@ struct AccountView: View {
                             }
                             .padding(12)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(colorScheme == .dark ? Color(white: 0.12) : Color.white.opacity(0.8))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .background(ComicTheme.Semantic.cardSurface(colorScheme))
+                            .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(ComicTheme.panelBorderColor(colorScheme).opacity(0.3), lineWidth: 1.5)
+                                RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                                    .stroke(ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.3), lineWidth: 2.0)
                             )
                         }
 
@@ -255,11 +255,11 @@ struct GenderPicker: View {
             }
         }
         .padding(12)
-        .background(colorScheme == .dark ? Color(white: 0.12) : Color.white.opacity(0.8))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(ComicTheme.Semantic.cardSurface(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(ComicTheme.panelBorderColor(colorScheme).opacity(0.3), lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                .stroke(ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.3), lineWidth: 2.0)
         )
     }
 }

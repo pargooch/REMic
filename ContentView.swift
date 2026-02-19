@@ -141,20 +141,20 @@ struct DreamRowView: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 56, height: 56)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.badgeCornerRadius))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(ComicTheme.panelBorderColor(colorScheme), lineWidth: 1.5)
+                            RoundedRectangle(cornerRadius: ComicTheme.Dimensions.badgeCornerRadius)
+                                .stroke(ComicTheme.Semantic.panelBorder(colorScheme), lineWidth: 1.5)
                         )
                 } else if let firstImage = dream.sortedImages.first, let uiImage = firstImage.uiImage {
                     Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 56, height: 56)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.badgeCornerRadius))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(ComicTheme.panelBorderColor(colorScheme), lineWidth: 1.5)
+                            RoundedRectangle(cornerRadius: ComicTheme.Dimensions.badgeCornerRadius)
+                                .stroke(ComicTheme.Semantic.panelBorder(colorScheme), lineWidth: 1.5)
                         )
                 }
 
@@ -167,7 +167,7 @@ struct DreamRowView: View {
                     HStack(spacing: 6) {
                         // Date badge
                         Text(dream.date, style: .date)
-                            .font(.system(size: 11, weight: .bold))
+                            .font(ComicTheme.Typography.caption())
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(accentColor.opacity(0.15))

@@ -8,7 +8,7 @@ struct ComicPanelCard<Content: View>: View {
 
     init(
         titleBanner: String? = nil,
-        bannerColor: Color = ComicTheme.Colors.boldBlue,
+        bannerColor: Color = ComicTheme.Semantic.primaryAction,
         @ViewBuilder content: () -> Content
     ) {
         self.titleBanner = titleBanner
@@ -22,7 +22,7 @@ struct ComicPanelCard<Content: View>: View {
                 Text(title.uppercased())
                     .font(ComicTheme.Typography.sectionHeader())
                     .tracking(1.5)
-                    .foregroundStyle(bannerColor == ComicTheme.Colors.goldenYellow ? .black : .white)
+                    .foregroundStyle(bannerColor == ComicTheme.Palette.goldenYellow ? ComicTheme.Palette.inkBlack : .white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -32,19 +32,19 @@ struct ComicPanelCard<Content: View>: View {
             content
                 .padding()
         }
-        .background(.regularMaterial)
+        .background(
+            ZStack {
+                ComicTheme.Semantic.cardSurface(colorScheme)
+                HalftoneBackground(dotSpacing: 18, opacity: 0.03)
+            }
+        )
         .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.panelCornerRadius))
         .overlay(
             RoundedRectangle(cornerRadius: ComicTheme.Dimensions.panelCornerRadius)
                 .stroke(
-                    ComicTheme.panelBorderColor(colorScheme),
+                    ComicTheme.Semantic.panelBorder(colorScheme),
                     lineWidth: ComicTheme.Dimensions.panelBorderWidth
                 )
-        )
-        .shadow(
-            color: .black.opacity(0.15),
-            radius: ComicTheme.Dimensions.cardShadowRadius,
-            x: 2, y: 2
         )
     }
 }

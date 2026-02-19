@@ -38,11 +38,11 @@ struct MoodSuggestionView: View {
                     .foregroundColor(.secondary)
             }
             .padding(12)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .background(ComicTheme.Semantic.cardSurface(colorScheme))
+            .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(ComicTheme.Colors.goldenYellow.opacity(0.3), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                    .stroke(ComicTheme.Colors.goldenYellow.opacity(0.3), lineWidth: 2.0)
             )
         }
         .buttonStyle(.plain)

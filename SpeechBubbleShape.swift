@@ -9,7 +9,7 @@ struct SpeechBubbleShape: Shape {
 
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        let cornerRadius: CGFloat = 12
+        let cornerRadius: CGFloat = ComicTheme.Dimensions.panelCornerRadius
         let bodyRect = CGRect(
             x: rect.minX, y: rect.minY,
             width: rect.width, height: rect.height - tailHeight
@@ -41,13 +41,13 @@ struct SpeechBubbleModifier: ViewModifier {
             .padding(.bottom, 14)
             .background(
                 SpeechBubbleShape()
-                    .fill(colorScheme == .dark ? Color(white: 0.15) : .white)
+                    .fill(ComicTheme.Semantic.cardSurface(colorScheme))
             )
             .overlay(
                 SpeechBubbleShape()
                     .stroke(
-                        ComicTheme.panelBorderColor(colorScheme),
-                        lineWidth: 1.5
+                        ComicTheme.Semantic.panelBorder(colorScheme),
+                        lineWidth: ComicTheme.Dimensions.speechBubbleBorderWidth
                     )
             )
     }

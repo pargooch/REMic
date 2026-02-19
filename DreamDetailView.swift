@@ -19,6 +19,7 @@ struct DreamDetailView: View {
     @State private var hasPreselectedTone = false
     @State private var showDeleteConfirmation = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     let tones = ["happy", "funny", "hopeful", "calm", "positive"]
 
@@ -89,8 +90,8 @@ struct DreamDetailView: View {
                                     .padding(6)
                             }
                             .frame(minHeight: 100)
-                            .background(Color(.systemBackground).opacity(0.5))
-                            .cornerRadius(8)
+                            .background(ComicTheme.Semantic.cardSurface(colorScheme))
+                            .cornerRadius(ComicTheme.Dimensions.buttonCornerRadius)
                         } else {
                             Text(dream.originalText)
                                 .font(.body)
@@ -173,8 +174,8 @@ struct DreamDetailView: View {
                                         .padding(6)
                                 }
                                 .frame(minHeight: 100)
-                                .background(Color(.systemBackground).opacity(0.5))
-                                .cornerRadius(8)
+                                .background(ComicTheme.Semantic.cardSurface(colorScheme))
+                                .cornerRadius(ComicTheme.Dimensions.buttonCornerRadius)
                             } else {
                                 Text(rewritten)
                                     .font(ComicTheme.Typography.speechBubble())
@@ -386,12 +387,12 @@ struct ToneChipStyle: ButtonStyle {
             .padding(.vertical, 6)
             .background(isSelected ? ComicTheme.Colors.crimsonRed : Color.clear)
             .foregroundStyle(isSelected ? .white : .primary)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.badgeCornerRadius))
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: ComicTheme.Dimensions.badgeCornerRadius)
                     .stroke(
-                        isSelected ? ComicTheme.Colors.crimsonRed : ComicTheme.panelBorderColor(colorScheme).opacity(0.4),
-                        lineWidth: isSelected ? 2 : 1
+                        isSelected ? ComicTheme.Colors.crimsonRed : ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.4),
+                        lineWidth: isSelected ? 2.5 : 1.5
                     )
             )
             .scaleEffect(configuration.isPressed ? 0.92 : 1.0)

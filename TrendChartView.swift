@@ -8,6 +8,7 @@ struct TrendChartView: View {
     /// The currently highlighted emotion (tapped in legend). Nil = all shown equally.
     @State private var highlightedEmotion: String?
     @State private var selectedDate: Date?
+    @Environment(\.colorScheme) private var colorScheme
 
     private var emotions: [String] {
         Array(Set(dataPoints.map { $0.emotion })).sorted()
@@ -165,7 +166,7 @@ struct TrendChartView: View {
                 AxisValueLabel {
                     if let v = value.as(Double.self) {
                         Text(String(format: "%.0f%%", v * 100))
-                            .font(.system(size: 9, weight: .bold))
+                            .font(ComicTheme.Typography.caption(9))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -180,7 +181,7 @@ struct TrendChartView: View {
                 AxisValueLabel(anchor: .top) {
                     if let date = value.as(Date.self) {
                         Text(date, format: .dateTime.month(.abbreviated).day())
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(ComicTheme.Typography.caption(10))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -227,11 +228,11 @@ struct TrendChartView: View {
             }
         }
         .padding(10)
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(ComicTheme.Semantic.cardSurface(colorScheme))
+        .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                .stroke(ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.2), lineWidth: 1.5)
         )
     }
 

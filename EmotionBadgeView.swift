@@ -5,7 +5,7 @@ struct EmotionBadgeView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     static let emotionColors: [String: Color] = [
-        "fear": .red,
+        "fear": Color(red: 0xFD/255, green: 0x5A/255, blue: 0x46/255),
         "sadness": Color(red: 0.2, green: 0.4, blue: 0.9),
         "anger": .orange,
         "anxiety": Color(red: 0.95, green: 0.85, blue: 0.1),
