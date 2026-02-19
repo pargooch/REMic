@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import Combine
 
 /// Avatar selection flow: Memoji sticker, Photo Library, Camera, or Remove
 struct AvatarPickerView: View {
@@ -147,21 +148,12 @@ struct AvatarPickerView: View {
                 }
             }
             .sheet(isPresented: $showMemojiBridge) {
-                NavigationView {
-                    MemojiTextViewWrapper(onSave: { image in
-                        previewImage = image
-                        showMemojiBridge = false
-                    })
-                    .navigationTitle(L("Memoji"))
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button(L("Cancel")) {
-                                showMemojiBridge = false
-                            }
-                        }
-                    }
-                }
+                MemojiCaptureView(onSave: { image in
+                    previewImage = image
+                    showMemojiBridge = false
+                }, onCancel: {
+                    showMemojiBridge = false
+                })
             }
             .sheet(isPresented: $showCamera) {
                 CameraPickerView { image in
@@ -250,192 +242,268 @@ struct AvatarPickerView: View {
     }
 }
 
-// MARK: - Memoji UITextView (renders sticker images inline)
+// MARK: - Sticker Text View (intercepts paste for Memoji stickers)
 
-struct MemojiTextViewWrapper: UIViewControllerRepresentable {
-    let onSave: (UIImage) -> Void
+class StickerTextView: UITextView {
+    var onStickerImage: ((UIImage) -> Void)?
 
-    func makeUIViewController(context: Context) -> MemojiTextViewController {
-        let vc = MemojiTextViewController()
-        vc.onSave = onSave
-        return vc
-    }
-
-    func updateUIViewController(_ uiViewController: MemojiTextViewController, context: Context) {
-        uiViewController.onSave = onSave
+    override func paste(_ sender: Any?) {
+        // Intercept: grab the sticker image directly from clipboard before UITextView processes it
+        if let image = UIPasteboard.general.image {
+            onStickerImage?(image)
+        }
+        super.paste(sender)
     }
 }
 
-class MemojiTextViewController: UIViewController {
-    var onSave: ((UIImage) -> Void)?
-    private let textView = UITextView()
-    private let instructionLabel = UILabel()
-    private let previewImageView = UIImageView()
-    private let useButton = UIButton(type: .system)
-    private let pasteButton = UIButton(type: .system)
-    private var pasteboardObserver: Any?
-    private var clipboardTimer: Timer?
-    private var lastPasteboardChangeCount = UIPasteboard.general.changeCount
-    private var capturedImage: UIImage?
+// MARK: - Memoji Input State (bridges UITextView ↔ SwiftUI)
 
-    init() {
-        super.init(nibName: nil, bundle: nil)
+class MemojiInputState: ObservableObject {
+    @Published var hasContent = false
+    weak var textView: UITextView?
+
+    /// Try every possible way to extract a sticker image
+    func captureImage() -> UIImage? {
+        if let image = extractFromAttachments() { return image }
+        if let image = UIPasteboard.general.image { return image }
+        return nil
     }
 
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+    private func extractFromAttachments() -> UIImage? {
+        guard let textView = textView else { return nil }
+        let attrText = textView.attributedText ?? NSAttributedString()
+        guard attrText.length > 0 else { return nil }
+
+        var found: UIImage?
+        attrText.enumerateAttribute(.attachment, in: NSRange(location: 0, length: attrText.length)) { value, _, stop in
+            guard let attachment = value as? NSTextAttachment else { return }
+            if let img = attachment.image {
+                found = img; stop.pointee = true; return
+            }
+            if let data = attachment.fileWrapper?.regularFileContents, let img = UIImage(data: data) {
+                found = img; stop.pointee = true; return
+            }
+            if let data = attachment.contents, let img = UIImage(data: data) {
+                found = img; stop.pointee = true; return
+            }
+            if let img = attachment.image(forBounds: attachment.bounds, textContainer: nil, characterIndex: 0) {
+                found = img; stop.pointee = true; return
+            }
+        }
+        return found
+    }
+}
+
+// MARK: - Memoji Capture View (Comic-themed)
+
+struct MemojiCaptureView: View {
+    let onSave: (UIImage) -> Void
+    let onCancel: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var capturedImage: UIImage?
+    @StateObject private var inputState = MemojiInputState()
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: ComicTheme.Dimensions.gutterWidth) {
+                    // Instructions
+                    ComicPanelCard(titleBanner: L("How To"), bannerColor: ComicTheme.Colors.boldBlue) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            instructionRow(number: 1, text: L("Tap the area below to open the keyboard"))
+                            instructionRow(number: 2, text: L("Tap") + " 🌐 " + L("to switch to emoji keyboard"))
+                            instructionRow(number: 3, text: L("Swipe to find Memoji stickers and tap one"))
+                        }
+                    }
+
+                    // Input area
+                    ComicPanelCard(titleBanner: L("Enter Memoji"), bannerColor: ComicTheme.Colors.deepPurple) {
+                        MemojiInputField(onImageCaptured: { image in
+                            capturedImage = image
+                        }, inputState: inputState)
+                        .frame(height: 120)
+                        .background(ComicTheme.Semantic.cardSurface(colorScheme))
+                        .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                                .stroke(ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.3), lineWidth: 2.0)
+                        )
+                    }
+
+                    if let image = capturedImage {
+                        // Preview + Use button
+                        ComicPanelCard(titleBanner: L("Preview"), bannerColor: ComicTheme.Colors.emeraldGreen) {
+                            VStack(spacing: 16) {
+                                HStack {
+                                    Spacer()
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 120, height: 120)
+                                        .clipShape(Circle())
+                                        .overlay(
+                                            Circle()
+                                                .stroke(
+                                                    ComicTheme.panelBorderColor(colorScheme),
+                                                    lineWidth: ComicTheme.Dimensions.panelBorderWidth
+                                                )
+                                        )
+                                    Spacer()
+                                }
+
+                                Button {
+                                    onSave(image)
+                                } label: {
+                                    Label(L("Use This Memoji"), systemImage: "checkmark.circle.fill")
+                                }
+                                .buttonStyle(.comicPrimary(color: ComicTheme.Colors.emeraldGreen))
+                            }
+                        }
+                    }
+
+                    // Paste fallback
+                    Button {
+                        if let image = UIPasteboard.general.image {
+                            capturedImage = image
+                        }
+                    } label: {
+                        Label(L("Paste from Clipboard"), systemImage: "doc.on.clipboard")
+                    }
+                    .buttonStyle(.comicSecondary(color: ComicTheme.Colors.boldBlue))
+                }
+                .padding()
+            }
+            .halftoneBackground()
+            .navigationTitle(L("Memoji"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L("Cancel")) {
+                        onCancel()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(L("Done")) {
+                        if let image = capturedImage {
+                            onSave(image)
+                        } else if let image = inputState.captureImage() {
+                            onSave(image)
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+    @ViewBuilder
+    private func instructionRow(number: Int, text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Text("\(number)")
+                .font(ComicTheme.Typography.comicButton(12))
+                .foregroundColor(.white)
+                .frame(width: 22, height: 22)
+                .background(ComicTheme.Colors.boldBlue)
+                .clipShape(Circle())
+            Text(text)
+                .font(ComicTheme.Typography.speechBubble(14))
+                .foregroundColor(.primary)
+        }
+    }
+}
 
-        // Instruction label
-        instructionLabel.numberOfLines = 0
-        instructionLabel.textAlignment = .center
-        instructionLabel.translatesAutoresizingMaskIntoConstraints = false
-        let steps = [
-            L("Tap the area below to open the keyboard"),
-            L("Tap") + " 🌐 " + L("to switch to emoji keyboard"),
-            L("Swipe to find Memoji stickers and tap one"),
-        ]
-        let text = steps.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")
-        instructionLabel.text = text
-        instructionLabel.font = .preferredFont(forTextStyle: .subheadline)
-        instructionLabel.textColor = .secondaryLabel
-        view.addSubview(instructionLabel)
+// MARK: - Memoji Input Field (StickerTextView wrapper)
 
-        // Text view (receives sticker paste from keyboard)
+struct MemojiInputField: UIViewRepresentable {
+    let onImageCaptured: (UIImage) -> Void
+    let inputState: MemojiInputState
+
+    func makeUIView(context: Context) -> StickerTextView {
+        let textView = StickerTextView()
         textView.font = .systemFont(ofSize: 48)
         textView.textAlignment = .center
-        textView.backgroundColor = .secondarySystemBackground
-        textView.layer.cornerRadius = 12
-        textView.clipsToBounds = true
+        textView.backgroundColor = .clear
         textView.allowsEditingTextAttributes = true
-        textView.translatesAutoresizingMaskIntoConstraints = false
-        textView.delegate = self
-        view.addSubview(textView)
-
-        // Preview image (shown when a Memoji is captured)
-        previewImageView.contentMode = .scaleAspectFit
-        previewImageView.layer.cornerRadius = 60
-        previewImageView.clipsToBounds = true
-        previewImageView.layer.borderWidth = 3
-        previewImageView.layer.borderColor = UIColor.systemBlue.cgColor
-        previewImageView.translatesAutoresizingMaskIntoConstraints = false
-        previewImageView.isHidden = true
-        view.addSubview(previewImageView)
-
-        // "Use This Memoji" button (shown after capture)
-        var useConfig = UIButton.Configuration.filled()
-        useConfig.title = L("Use This Memoji")
-        useConfig.image = UIImage(systemName: "checkmark.circle.fill")
-        useConfig.imagePadding = 8
-        useConfig.baseBackgroundColor = .systemGreen
-        useButton.configuration = useConfig
-        useButton.addTarget(self, action: #selector(useTapped), for: .touchUpInside)
-        useButton.translatesAutoresizingMaskIntoConstraints = false
-        useButton.isHidden = true
-        view.addSubview(useButton)
-
-        // "Paste from Clipboard" fallback
-        var pasteConfig = UIButton.Configuration.tinted()
-        pasteConfig.title = L("Or paste copied Memoji from clipboard")
-        pasteConfig.image = UIImage(systemName: "doc.on.clipboard")
-        pasteConfig.imagePadding = 8
-        pasteConfig.baseForegroundColor = .secondaryLabel
-        pasteButton.configuration = pasteConfig
-        pasteButton.addTarget(self, action: #selector(pasteTapped), for: .touchUpInside)
-        pasteButton.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(pasteButton)
-
-        NSLayoutConstraint.activate([
-            instructionLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            instructionLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            instructionLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-
-            textView.topAnchor.constraint(equalTo: instructionLabel.bottomAnchor, constant: 16),
-            textView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            textView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            textView.heightAnchor.constraint(equalToConstant: 120),
-
-            previewImageView.topAnchor.constraint(equalTo: textView.bottomAnchor, constant: 16),
-            previewImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            previewImageView.widthAnchor.constraint(equalToConstant: 120),
-            previewImageView.heightAnchor.constraint(equalToConstant: 120),
-
-            useButton.topAnchor.constraint(equalTo: previewImageView.bottomAnchor, constant: 16),
-            useButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 24),
-            useButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -24),
-            useButton.heightAnchor.constraint(equalToConstant: 50),
-
-            pasteButton.topAnchor.constraint(equalTo: useButton.bottomAnchor, constant: 12),
-            pasteButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-        ])
-
-        // Poll clipboard every 0.5s (UIPasteboard.changedNotification is unreliable for stickers)
-        lastPasteboardChangeCount = UIPasteboard.general.changeCount
-        clipboardTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            self?.checkClipboardForNewImage()
+        textView.delegate = context.coordinator
+        textView.onStickerImage = { image in
+            context.coordinator.onImageCaptured(image)
         }
-    }
-
-    deinit {
-        clipboardTimer?.invalidate()
-        if let observer = pasteboardObserver {
-            NotificationCenter.default.removeObserver(observer)
+        inputState.textView = textView
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            textView.becomeFirstResponder()
         }
+        return textView
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        textView.becomeFirstResponder()
-    }
-
-    private func checkClipboardForNewImage() {
-        let currentCount = UIPasteboard.general.changeCount
-        guard currentCount != lastPasteboardChangeCount else { return }
-        lastPasteboardChangeCount = currentCount
-
-        if let image = UIPasteboard.general.image {
-            showCapturedImage(image)
+    func updateUIView(_ uiView: StickerTextView, context: Context) {
+        context.coordinator.onImageCaptured = onImageCaptured
+        uiView.onStickerImage = { image in
+            context.coordinator.onImageCaptured(image)
         }
+        inputState.textView = uiView
     }
 
-    private func showCapturedImage(_ image: UIImage) {
-        capturedImage = image
-        previewImageView.image = image
-        previewImageView.isHidden = false
-        useButton.isHidden = false
-
-        // Dismiss keyboard to make space for preview + button
-        textView.resignFirstResponder()
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onImageCaptured: onImageCaptured, inputState: inputState)
     }
 
-    @objc private func useTapped() {
-        guard let image = capturedImage else { return }
-        let callback = onSave
-        DispatchQueue.main.async {
-            callback?(image)
+    class Coordinator: NSObject, UITextViewDelegate {
+        var onImageCaptured: (UIImage) -> Void
+        let inputState: MemojiInputState
+        private var clipboardTimer: Timer?
+        private var lastPasteboardChangeCount: Int
+
+        init(onImageCaptured: @escaping (UIImage) -> Void, inputState: MemojiInputState) {
+            self.onImageCaptured = onImageCaptured
+            self.inputState = inputState
+            self.lastPasteboardChangeCount = UIPasteboard.general.changeCount
+            super.init()
+            // Must use .common mode so the timer fires while the keyboard is active (.tracking mode)
+            let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
+                self?.checkClipboard()
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            clipboardTimer = timer
         }
-    }
 
-    @objc private func pasteTapped() {
-        if let image = UIPasteboard.general.image {
-            showCapturedImage(image)
+        deinit {
+            clipboardTimer?.invalidate()
         }
-    }
-}
 
-extension MemojiTextViewController: UITextViewDelegate {
-    func textViewDidChange(_ textView: UITextView) {
-        // Check if sticker was inserted as NSTextAttachment
-        let attrText = textView.attributedText ?? NSAttributedString()
-        attrText.enumerateAttribute(.attachment, in: NSRange(location: 0, length: attrText.length)) { value, _, stop in
-            if let attachment = value as? NSTextAttachment,
-               let image = attachment.image ?? attachment.image(forBounds: attachment.bounds, textContainer: nil, characterIndex: 0) {
-                self.showCapturedImage(image)
-                stop.pointee = true
+        func textViewDidChange(_ textView: UITextView) {
+            let attrText = textView.attributedText ?? NSAttributedString()
+
+            DispatchQueue.main.async {
+                self.inputState.hasContent = attrText.length > 0
+            }
+
+            // Robust NSTextAttachment image extraction
+            attrText.enumerateAttribute(.attachment, in: NSRange(location: 0, length: attrText.length)) { value, _, stop in
+                guard let attachment = value as? NSTextAttachment else { return }
+                var image: UIImage?
+                if let img = attachment.image {
+                    image = img
+                } else if let data = attachment.fileWrapper?.regularFileContents, let img = UIImage(data: data) {
+                    image = img
+                } else if let data = attachment.contents, let img = UIImage(data: data) {
+                    image = img
+                } else if let img = attachment.image(forBounds: attachment.bounds, textContainer: nil, characterIndex: 0) {
+                    image = img
+                }
+                if let image = image {
+                    DispatchQueue.main.async { self.onImageCaptured(image) }
+                    stop.pointee = true
+                }
+            }
+        }
+
+        private func checkClipboard() {
+            let currentCount = UIPasteboard.general.changeCount
+            guard currentCount != lastPasteboardChangeCount else { return }
+            lastPasteboardChangeCount = currentCount
+            if let image = UIPasteboard.general.image {
+                DispatchQueue.main.async {
+                    self.onImageCaptured(image)
+                }
             }
         }
     }
