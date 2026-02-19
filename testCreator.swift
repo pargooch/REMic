@@ -1,6 +1,6 @@
 //
 //  testCreator.swift
-//  Dreamcatcher
+//  REMic
 //
 //  Created by Novin dokht Elmi on 11/02/26.
 //

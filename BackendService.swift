@@ -4,7 +4,7 @@ class BackendService {
     static let shared = BackendService()
 
     private let baseURL: URL = {
-        #if DEBUG
+        #if DEBUG && targetEnvironment(simulator)
         return URL(string: "http://localhost:3002/api/")!
         #else
         return URL(string: "https://dreamcatcher-api.percodice.it/api/")!

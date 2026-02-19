@@ -1,10 +1,10 @@
-# Dreamcatcher
+# REMic
 
 A therapeutic iOS app for dream journaling and nightmare rewriting using AI-powered Imagery Rehearsal Therapy (IRT).
 
 ## Overview
 
-Dreamcatcher helps users process nightmares by rewriting them into calming, positive versions. The app uses AI (via OpenRouter/xAI Grok) to transform distressing dream content into emotionally safe narratives, following evidence-based IRT principles used in PTSD treatment.
+REMic helps users process nightmares by rewriting them into calming, positive versions. The app uses AI (via OpenRouter/xAI Grok) to transform distressing dream content into emotionally safe narratives, following evidence-based IRT principles used in PTSD treatment.
 
 ## Features
 
@@ -47,8 +47,8 @@ Dreamcatcher helps users process nightmares by rewriting them into calming, posi
 ### Project Structure
 
 ```
-Dreamcatcher/
-├── DreamcatcherApp.swift         # App entry point & notification delegate
+REMic/
+├── REMicApp.swift         # App entry point & notification delegate
 ├── ContentView.swift             # Main dream list view
 ├── DreamDetailView.swift         # Dream detail, rewrite, edit, images & reminders
 ├── NewDreamView.swift            # New dream entry form
@@ -84,7 +84,7 @@ Dreamcatcher/
    <key>OPENAI_API_KEY</key>
    <string>sk-your-openai-key-here</string>
    ```
-4. Open `Dreamcatcher.xcodeproj` in Xcode
+4. Open `REMic.xcodeproj` in Xcode
 5. Add `Secrets.plist` to the project target (ensure it's included in "Copy Bundle Resources")
 6. Build and run
 

@@ -2,7 +2,7 @@ import SwiftUI
 import UserNotifications
 
 @main
-struct DreamCatcherApp: App {
+struct REMicApp: App {
     @StateObject var store = DreamStore()
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var landingOpacity: Double = 1.0
@@ -17,6 +17,8 @@ struct DreamCatcherApp: App {
                     .environment(analysisService)
                     .onAppear {
                         _ = NotificationManager.shared
+                        KeyboardDismissHelper.setupGlobalDoneButton()
+                        KeyboardDismissHelper.setupTapToDismiss()
                     }
 
                 if !landingFinished {
@@ -32,6 +34,40 @@ struct DreamCatcherApp: App {
                 }
             }
         }
+    }
+}
+
+// MARK: - Keyboard Dismissal (UIKit-based for reliability)
+
+enum KeyboardDismissHelper {
+
+    /// Adds a localized "Done" button above the keyboard for all UITextField and UITextView instances.
+    static func setupGlobalDoneButton() {
+        let toolbar = UIToolbar()
+        toolbar.sizeToFit()
+        let spacer = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let doneButton = UIBarButtonItem(title: L("Done"), style: .done, target: nil, action: #selector(UIApplication.dismissKeyboard))
+        toolbar.items = [spacer, doneButton]
+
+        UITextField.appearance().inputAccessoryView = toolbar
+        UITextView.appearance().inputAccessoryView = toolbar
+    }
+
+    /// Adds a tap gesture recognizer on the key window that dismisses the keyboard
+    /// without interfering with buttons, links, or other interactive elements.
+    static func setupTapToDismiss() {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first else { return }
+        let tap = UITapGestureRecognizer(target: window, action: #selector(UIView.endEditing(_:)))
+        tap.cancelsTouchesInView = false
+        tap.requiresExclusiveTouchType = false
+        window.addGestureRecognizer(tap)
+    }
+}
+
+private extension UIApplication {
+    @objc static func dismissKeyboard() {
+        shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 

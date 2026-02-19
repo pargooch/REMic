@@ -56,7 +56,7 @@ struct NotificationTemplate: Identifiable, Codable {
     }
 
     func randomTitle() -> String {
-        titleOptions.randomElement() ?? "Dreamcatcher"
+        titleOptions.randomElement() ?? "REMic"
     }
 
     func randomBody() -> String {
