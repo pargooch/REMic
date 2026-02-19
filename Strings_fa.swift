@@ -193,6 +193,42 @@ let strings_fa: [String: String] = [
     "We suggest rewriting this as a ": "پیشنهاد می‌کنیم این را به صورت یک رویای ",
     " dream": " بازنویسی کنید",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "ترس",
+    "Sadness": "غم",
+    "Anger": "خشم",
+    "Anxiety": "اضطراب",
+    "Stress": "استرس",
+    "Loneliness": "تنهایی",
+    "Helplessness": "درماندگی",
+    "Shame": "شرم",
+    "Grief": "سوگ",
+    "Confusion": "سردرگمی",
+    "Joy": "شادی",
+    "Love": "عشق",
+    "Surprise": "شگفتی",
+    "Disgust": "انزجار",
+    "Trust": "اعتماد",
+    "Anticipation": "پیش‌بینی",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "آرام",
+    "Serene": "آسوده",
+    "Humorous": "طنزآمیز",
+    "Lighthearted": "سبک‌دل",
+    "Empowering": "توانمندساز",
+    "Confident": "مطمئن",
+    "Optimistic": "خوش‌بین",
+    "Inspiring": "الهام‌بخش",
+    "Joyful": "شادمان",
+    "Cheerful": "سرحال",
+    "Neutral": "خنثی",
+
+    // MARK: - Trend Directions
+    "Improving": "در حال بهبود",
+    "Worsening": "در حال بدتر شدن",
+    "Stable": "پایدار",
+
     // MARK: - Analysis Periods
     "7 Days": "۷ روز",
     "30 Days": "۳۰ روز",

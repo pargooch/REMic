@@ -193,6 +193,42 @@ let strings_ru: [String: String] = [
     "We suggest rewriting this as a ": "Мы предлагаем переписать это как ",
     " dream": " сон",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "Страх",
+    "Sadness": "Печаль",
+    "Anger": "Гнев",
+    "Anxiety": "Тревога",
+    "Stress": "Стресс",
+    "Loneliness": "Одиночество",
+    "Helplessness": "Беспомощность",
+    "Shame": "Стыд",
+    "Grief": "Горе",
+    "Confusion": "Замешательство",
+    "Joy": "Радость",
+    "Love": "Любовь",
+    "Surprise": "Удивление",
+    "Disgust": "Отвращение",
+    "Trust": "Доверие",
+    "Anticipation": "Предвкушение",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "Умиротворённый",
+    "Serene": "Безмятежный",
+    "Humorous": "Юмористический",
+    "Lighthearted": "Беззаботный",
+    "Empowering": "Вдохновляющий",
+    "Confident": "Уверенный",
+    "Optimistic": "Оптимистичный",
+    "Inspiring": "Воодушевляющий",
+    "Joyful": "Радостный",
+    "Cheerful": "Весёлый",
+    "Neutral": "Нейтральный",
+
+    // MARK: - Trend Directions
+    "Improving": "Улучшается",
+    "Worsening": "Ухудшается",
+    "Stable": "Стабильный",
+
     // MARK: - Analysis Periods
     "7 Days": "7 дней",
     "30 Days": "30 дней",

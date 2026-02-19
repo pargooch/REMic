@@ -193,6 +193,42 @@ let strings_ro: [String: String] = [
     "We suggest rewriting this as a ": "Suger\u{0103}m rescrierea acestuia ca un ",
     " dream": " vis",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "Frică",
+    "Sadness": "Tristețe",
+    "Anger": "Furie",
+    "Anxiety": "Anxietate",
+    "Stress": "Stres",
+    "Loneliness": "Singurătate",
+    "Helplessness": "Neputință",
+    "Shame": "Rușine",
+    "Grief": "Doliu",
+    "Confusion": "Confuzie",
+    "Joy": "Bucurie",
+    "Love": "Iubire",
+    "Surprise": "Surpriză",
+    "Disgust": "Dezgust",
+    "Trust": "Încredere",
+    "Anticipation": "Anticipare",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "Pașnic",
+    "Serene": "Senin",
+    "Humorous": "Amuzant",
+    "Lighthearted": "Ușor",
+    "Empowering": "Împuternicitor",
+    "Confident": "Încrezător",
+    "Optimistic": "Optimist",
+    "Inspiring": "Inspirațional",
+    "Joyful": "Vesel",
+    "Cheerful": "Voios",
+    "Neutral": "Neutru",
+
+    // MARK: - Trend Directions
+    "Improving": "În îmbunătățire",
+    "Worsening": "În deteriorare",
+    "Stable": "Stabil",
+
     // MARK: - Analysis Periods
     "7 Days": "7 zile",
     "30 Days": "30 de zile",

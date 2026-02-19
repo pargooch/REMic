@@ -193,6 +193,42 @@ let strings_cs: [String: String] = [
     "We suggest rewriting this as a ": "Navrhujeme přepsat tento sen jako ",
     " dream": " sen",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "Strach",
+    "Sadness": "Smutek",
+    "Anger": "Hněv",
+    "Anxiety": "Úzkost",
+    "Stress": "Stres",
+    "Loneliness": "Osamělost",
+    "Helplessness": "Bezmocnost",
+    "Shame": "Stud",
+    "Grief": "Žal",
+    "Confusion": "Zmatek",
+    "Joy": "Radost",
+    "Love": "Láska",
+    "Surprise": "Překvapení",
+    "Disgust": "Znechucení",
+    "Trust": "Důvěra",
+    "Anticipation": "Očekávání",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "Klidný",
+    "Serene": "Poklidný",
+    "Humorous": "Humorný",
+    "Lighthearted": "Bezstarostný",
+    "Empowering": "Posilující",
+    "Confident": "Sebejistý",
+    "Optimistic": "Optimistický",
+    "Inspiring": "Inspirativní",
+    "Joyful": "Radostný",
+    "Cheerful": "Veselý",
+    "Neutral": "Neutrální",
+
+    // MARK: - Trend Directions
+    "Improving": "Zlepšující se",
+    "Worsening": "Zhoršující se",
+    "Stable": "Stabilní",
+
     // MARK: - Analysis Periods
     "7 Days": "7 dní",
     "30 Days": "30 dní",

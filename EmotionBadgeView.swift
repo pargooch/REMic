@@ -23,14 +23,17 @@ struct EmotionBadgeView: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Text(emotion.emotion.capitalized)
+            Text(L(emotion.emotion.capitalized))
                 .font(.system(size: 12, weight: .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
             Text(String(format: "%.0f%%", emotion.intensity * 100))
                 .font(.system(size: 10, weight: .heavy))
                 .opacity(0.7)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
+        .fixedSize()
         .background(badgeColor.opacity(0.15 + emotion.intensity * 0.2))
         .foregroundColor(badgeColor)
         .clipShape(Capsule())

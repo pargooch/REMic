@@ -193,6 +193,42 @@ let strings_nl: [String: String] = [
     "We suggest rewriting this as a ": "We stellen voor dit te herschrijven als een ",
     " dream": " droom",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "Angst",
+    "Sadness": "Verdriet",
+    "Anger": "Woede",
+    "Anxiety": "Bezorgdheid",
+    "Stress": "Stress",
+    "Loneliness": "Eenzaamheid",
+    "Helplessness": "Hulpeloosheid",
+    "Shame": "Schaamte",
+    "Grief": "Rouw",
+    "Confusion": "Verwarring",
+    "Joy": "Vreugde",
+    "Love": "Liefde",
+    "Surprise": "Verrassing",
+    "Disgust": "Walging",
+    "Trust": "Vertrouwen",
+    "Anticipation": "Verwachting",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "Vredig",
+    "Serene": "Sereen",
+    "Humorous": "Humoristisch",
+    "Lighthearted": "Luchtig",
+    "Empowering": "Versterkend",
+    "Confident": "Zelfverzekerd",
+    "Optimistic": "Optimistisch",
+    "Inspiring": "Inspirerend",
+    "Joyful": "Blij",
+    "Cheerful": "Opgewekt",
+    "Neutral": "Neutraal",
+
+    // MARK: - Trend Directions
+    "Improving": "Verbeterend",
+    "Worsening": "Verslechterend",
+    "Stable": "Stabiel",
+
     // MARK: - Analysis Periods
     "7 Days": "7 dagen",
     "30 Days": "30 dagen",

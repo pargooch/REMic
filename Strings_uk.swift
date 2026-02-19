@@ -193,6 +193,42 @@ let strings_uk: [String: String] = [
     "We suggest rewriting this as a ": "Ми пропонуємо переписати це як ",
     " dream": " сон",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "Страх",
+    "Sadness": "Смуток",
+    "Anger": "Гнів",
+    "Anxiety": "Тривога",
+    "Stress": "Стрес",
+    "Loneliness": "Самотність",
+    "Helplessness": "Безпорадність",
+    "Shame": "Сором",
+    "Grief": "Горе",
+    "Confusion": "Розгубленість",
+    "Joy": "Радість",
+    "Love": "Любов",
+    "Surprise": "Здивування",
+    "Disgust": "Огида",
+    "Trust": "Довіра",
+    "Anticipation": "Передчуття",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "Мирний",
+    "Serene": "Безтурботний",
+    "Humorous": "Гумористичний",
+    "Lighthearted": "Легкий",
+    "Empowering": "Надихаючий",
+    "Confident": "Впевнений",
+    "Optimistic": "Оптимістичний",
+    "Inspiring": "Натхненний",
+    "Joyful": "Радісний",
+    "Cheerful": "Веселий",
+    "Neutral": "Нейтральний",
+
+    // MARK: - Trend Directions
+    "Improving": "Покращується",
+    "Worsening": "Погіршується",
+    "Stable": "Стабільний",
+
     // MARK: - Analysis Periods
     "7 Days": "7 днів",
     "30 Days": "30 днів",

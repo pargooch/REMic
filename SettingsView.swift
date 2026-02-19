@@ -221,38 +221,81 @@ struct AccountView: View {
 
 struct LanguagePickerSection: View {
     @State private var localization = LocalizationManager.shared
+    @State private var isExpanded = false
     @Environment(\.colorScheme) private var colorScheme
+
+    private var currentLanguage: LocalizationManager.Language? {
+        LocalizationManager.supportedLanguages.first { $0.code == localization.currentLanguage }
+    }
 
     var body: some View {
         ComicPanelCard(titleBanner: L("Language"), bannerColor: ComicTheme.Colors.boldBlue) {
-            VStack(spacing: 8) {
-                ForEach(LocalizationManager.supportedLanguages) { lang in
-                    Button {
-                        localization.currentLanguage = lang.code
-                    } label: {
-                        HStack(spacing: 12) {
-                            Text(lang.nativeName)
+            VStack(spacing: 0) {
+                // Current selection — always visible, acts as toggle
+                Button {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        isExpanded.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "globe")
+                            .font(.title3.weight(.bold))
+                            .foregroundColor(ComicTheme.Colors.boldBlue)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(currentLanguage?.nativeName ?? "English")
                                 .font(ComicTheme.Typography.comicButton(14))
                                 .foregroundColor(.primary)
-                            Text(lang.name)
+                            Text(currentLanguage?.name ?? "English")
                                 .font(ComicTheme.Typography.speechBubble(12))
                                 .foregroundColor(.secondary)
-                            Spacer()
-                            if localization.currentLanguage == lang.code {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(ComicTheme.Colors.boldBlue)
-                            }
                         }
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 12)
-                        .background(
-                            localization.currentLanguage == lang.code
-                                ? ComicTheme.Colors.boldBlue.opacity(0.1)
-                                : Color.clear
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
+                        Spacer()
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.caption.weight(.bold))
+                            .foregroundColor(.secondary)
                     }
-                    .buttonStyle(.plain)
+                }
+                .buttonStyle(.plain)
+
+                // Expandable language list
+                if isExpanded {
+                    Divider()
+                        .padding(.vertical, 10)
+
+                    VStack(spacing: 4) {
+                        ForEach(LocalizationManager.supportedLanguages) { lang in
+                            Button {
+                                localization.currentLanguage = lang.code
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    isExpanded = false
+                                }
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text(lang.nativeName)
+                                        .font(ComicTheme.Typography.comicButton(14))
+                                        .foregroundColor(.primary)
+                                    Text(lang.name)
+                                        .font(ComicTheme.Typography.speechBubble(12))
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                    if localization.currentLanguage == lang.code {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(ComicTheme.Colors.boldBlue)
+                                    }
+                                }
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 12)
+                                .background(
+                                    localization.currentLanguage == lang.code
+                                        ? ComicTheme.Colors.boldBlue.opacity(0.1)
+                                        : Color.clear
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }

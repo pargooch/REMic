@@ -22,6 +22,8 @@ struct ComicPanelCard<Content: View>: View {
                 Text(title.uppercased())
                     .font(ComicTheme.Typography.sectionHeader())
                     .tracking(1.5)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .foregroundStyle(bannerColor == ComicTheme.Palette.goldenYellow ? ComicTheme.Palette.inkBlack : .white)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)

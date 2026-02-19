@@ -15,16 +15,15 @@ struct MoodSuggestionView: View {
                     .foregroundColor(ComicTheme.Colors.goldenYellow)
 
                 VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 0) {
-                        Text(L("We suggest rewriting this as a "))
-                            .font(ComicTheme.Typography.speechBubble(13))
-                        Text(L(suggestedMood.mood.capitalized))
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(ComicTheme.Colors.boldBlue)
-                        Text(L(" dream"))
-                            .font(ComicTheme.Typography.speechBubble(13))
-                    }
+                    (Text(L("We suggest rewriting this as a "))
+                        .font(ComicTheme.Typography.speechBubble(13))
+                    + Text(L(suggestedMood.mood.capitalized))
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(ComicTheme.Colors.boldBlue)
+                    + Text(L(" dream"))
+                        .font(ComicTheme.Typography.speechBubble(13)))
                     .foregroundColor(.primary)
+                    .lineLimit(2)
 
                     Text(suggestedMood.suggestion_reason)
                         .font(ComicTheme.Typography.speechBubble(11))

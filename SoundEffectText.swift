@@ -13,6 +13,8 @@ struct SoundEffectText: View {
         Text(text)
             .font(ComicTheme.Typography.soundEffect(fontSize))
             .foregroundStyle(fillColor)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
             .rotationEffect(.degrees(rotation))
             .scaleEffect(isAnimated ? 1.0 : 0.3)
             .opacity(isAnimated ? 1.0 : 0)

@@ -193,6 +193,42 @@ let strings_el: [String: String] = [
     "We suggest rewriting this as a ": "Προτείνουμε να ξαναγράψετε αυτό ως ",
     " dream": " όνειρο",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "Φόβος",
+    "Sadness": "Θλίψη",
+    "Anger": "Θυμός",
+    "Anxiety": "Άγχος",
+    "Stress": "Στρες",
+    "Loneliness": "Μοναξιά",
+    "Helplessness": "Αδυναμία",
+    "Shame": "Ντροπή",
+    "Grief": "Πένθος",
+    "Confusion": "Σύγχυση",
+    "Joy": "Χαρά",
+    "Love": "Αγάπη",
+    "Surprise": "Έκπληξη",
+    "Disgust": "Αηδία",
+    "Trust": "Εμπιστοσύνη",
+    "Anticipation": "Προσμονή",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "Ειρηνικός",
+    "Serene": "Γαλήνιος",
+    "Humorous": "Χιουμοριστικός",
+    "Lighthearted": "Ξέγνοιαστος",
+    "Empowering": "Ενδυναμωτικός",
+    "Confident": "Σίγουρος",
+    "Optimistic": "Αισιόδοξος",
+    "Inspiring": "Εμπνευστικός",
+    "Joyful": "Χαρούμενος",
+    "Cheerful": "Κεφάτος",
+    "Neutral": "Ουδέτερος",
+
+    // MARK: - Trend Directions
+    "Improving": "Βελτιώνεται",
+    "Worsening": "Επιδεινώνεται",
+    "Stable": "Σταθερός",
+
     // MARK: - Analysis Periods
     "7 Days": "7 Ημέρες",
     "30 Days": "30 Ημέρες",

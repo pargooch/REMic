@@ -66,32 +66,53 @@ enum ComicTheme {
     // MARK: - Typography
 
     enum Typography {
+        /// RTL scripts (Arabic, Persian) break with .rounded/.serif/.monospaced design modifiers
+        /// because those variants lack proper ligature and cursive joining support.
+        private static var isRTL: Bool {
+            let lang = LocalizationManager.shared.currentLanguage
+            return lang == "ar" || lang == "fa"
+        }
+
         static func dreamTitle(_ size: CGFloat = 28) -> Font {
-            .system(size: size, weight: .black, design: .rounded)
+            isRTL
+                ? .system(size: size, weight: .black)
+                : .system(size: size, weight: .black, design: .rounded)
         }
 
         static func sectionHeader(_ size: CGFloat = 13) -> Font {
-            .system(size: size, weight: .heavy, design: .rounded)
+            isRTL
+                ? .system(size: size, weight: .heavy)
+                : .system(size: size, weight: .heavy, design: .rounded)
         }
 
         static func soundEffect(_ size: CGFloat = 36) -> Font {
-            .system(size: size, weight: .black, design: .rounded).italic()
+            isRTL
+                ? .system(size: size, weight: .black)
+                : .system(size: size, weight: .black, design: .rounded).italic()
         }
 
         static func speechBubble(_ size: CGFloat = 15) -> Font {
-            .system(size: size, weight: .medium, design: .serif)
+            isRTL
+                ? .system(size: size, weight: .medium)
+                : .system(size: size, weight: .medium, design: .serif)
         }
 
         static func comicButton(_ size: CGFloat = 15) -> Font {
-            .system(size: size, weight: .heavy, design: .rounded)
+            isRTL
+                ? .system(size: size, weight: .heavy)
+                : .system(size: size, weight: .heavy, design: .rounded)
         }
 
         static func caption(_ size: CGFloat = 11) -> Font {
-            .system(size: size, weight: .bold, design: .monospaced)
+            isRTL
+                ? .system(size: size, weight: .bold)
+                : .system(size: size, weight: .bold, design: .monospaced)
         }
 
         static func bodyText(_ size: CGFloat = 15) -> Font {
-            .system(size: size, weight: .regular, design: .serif)
+            isRTL
+                ? .system(size: size, weight: .regular)
+                : .system(size: size, weight: .regular, design: .serif)
         }
     }
 
@@ -161,6 +182,8 @@ struct ComicPrimaryButtonStyle: ButtonStyle {
             .font(ComicTheme.Typography.comicButton())
             .textCase(.uppercase)
             .tracking(1.0)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .foregroundStyle(.white)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
@@ -185,6 +208,8 @@ struct ComicSecondaryButtonStyle: ButtonStyle {
             .font(ComicTheme.Typography.comicButton(14))
             .textCase(.uppercase)
             .tracking(1.0)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .foregroundStyle(color)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
@@ -208,6 +233,8 @@ struct ComicDestructiveButtonStyle: ButtonStyle {
             .font(ComicTheme.Typography.comicButton(14))
             .textCase(.uppercase)
             .tracking(1.0)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
             .foregroundStyle(ComicTheme.Semantic.destructiveAction)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)

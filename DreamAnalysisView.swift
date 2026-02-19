@@ -155,9 +155,11 @@ struct DreamAnalysisView: View {
         ComicPanelCard(titleBanner: L("Most Common Feeling"), bannerColor: ComicTheme.Colors.boldBlue) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(summary.most_common_emotion.capitalized)
+                    Text(L(summary.most_common_emotion.capitalized))
                         .font(.system(size: 24, weight: .black))
                         .foregroundColor(EmotionBadgeView.emotionColors[summary.most_common_emotion.lowercased()] ?? ComicTheme.Colors.boldBlue)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                     Text(L("Average intensity: %.0f%%", summary.most_common_intensity * 100))
                         .font(ComicTheme.Typography.speechBubble(12))
                         .foregroundColor(.secondary)
@@ -183,7 +185,7 @@ struct DreamAnalysisView: View {
                         innerRadius: .ratio(0.5),
                         angularInset: 2
                     )
-                    .foregroundStyle(by: .value("Mood", entry.mood.capitalized))
+                    .foregroundStyle(by: .value("Mood", L(entry.mood.capitalized)))
                     .cornerRadius(4)
                 }
                 .frame(height: 180)
@@ -191,7 +193,7 @@ struct DreamAnalysisView: View {
                 VStack(spacing: 6) {
                     ForEach(summary.mood_distribution) { entry in
                         HStack {
-                            Text(entry.mood.capitalized)
+                            Text(L(entry.mood.capitalized))
                                 .font(.system(size: 12, weight: .bold))
                             Spacer()
                             Text(String(format: "%.0f%%", entry.percentage))

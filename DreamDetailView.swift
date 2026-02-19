@@ -131,7 +131,7 @@ struct DreamDetailView: View {
 
                 // Show rewritten dream if available
                 if let rewritten = dream.rewrittenText {
-                    ComicPanelCard(titleBanner: L("Rewritten Dream (%@)", dream.tone?.capitalized ?? ""), bannerColor: ComicTheme.Colors.boldBlue) {
+                    ComicPanelCard(titleBanner: L("Rewritten Dream (%@)", L(dream.tone?.capitalized ?? "")), bannerColor: ComicTheme.Colors.boldBlue) {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Spacer()
@@ -146,7 +146,7 @@ struct DreamDetailView: View {
                                     Label(isEditing ? L("Save") : L("Edit"), systemImage: isEditing ? "checkmark" : "pencil")
                                 }
                                 .buttonStyle(.comicSecondary)
-                                .frame(maxWidth: 120)
+                                .frame(maxWidth: 160)
 
                                 if isEditing {
                                     Button {
@@ -156,7 +156,7 @@ struct DreamDetailView: View {
                                         Label(L("Cancel"), systemImage: "xmark")
                                     }
                                     .buttonStyle(.comicDestructive)
-                                    .frame(maxWidth: 120)
+                                    .frame(maxWidth: 160)
                                 }
                             }
 
@@ -209,6 +209,8 @@ struct DreamDetailView: View {
                                         Text(L(tone.capitalized))
                                             .font(.system(size: 13, weight: .bold))
                                             .tracking(0.5)
+                                            .lineLimit(1)
+                                            .fixedSize()
                                     }
                                     .buttonStyle(ToneChipStyle(isSelected: selectedTone == tone))
                                     .disabled(isEditing)

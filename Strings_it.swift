@@ -193,6 +193,42 @@ let strings_it: [String: String] = [
     "We suggest rewriting this as a ": "Suggeriamo di riscrivere questo come un sogno ",
     " dream": "",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "Paura",
+    "Sadness": "Tristezza",
+    "Anger": "Rabbia",
+    "Anxiety": "Ansia",
+    "Stress": "Stress",
+    "Loneliness": "Solitudine",
+    "Helplessness": "Impotenza",
+    "Shame": "Vergogna",
+    "Grief": "Lutto",
+    "Confusion": "Confusione",
+    "Joy": "Gioia",
+    "Love": "Amore",
+    "Surprise": "Sorpresa",
+    "Disgust": "Disgusto",
+    "Trust": "Fiducia",
+    "Anticipation": "Aspettativa",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "Pacifico",
+    "Serene": "Sereno",
+    "Humorous": "Umoristico",
+    "Lighthearted": "Spensierato",
+    "Empowering": "Potenziante",
+    "Confident": "Sicuro",
+    "Optimistic": "Ottimista",
+    "Inspiring": "Ispirante",
+    "Joyful": "Gioioso",
+    "Cheerful": "Allegro",
+    "Neutral": "Neutro",
+
+    // MARK: - Trend Directions
+    "Improving": "In miglioramento",
+    "Worsening": "In peggioramento",
+    "Stable": "Stabile",
+
     // MARK: - Analysis Periods
     "7 Days": "7 Giorni",
     "30 Days": "30 Giorni",

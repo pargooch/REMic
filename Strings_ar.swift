@@ -193,6 +193,42 @@ let strings_ar: [String: String] = [
     "We suggest rewriting this as a ": "نقترح إعادة كتابة هذا كحلم ",
     " dream": "",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "خوف",
+    "Sadness": "حزن",
+    "Anger": "غضب",
+    "Anxiety": "قلق",
+    "Stress": "توتر",
+    "Loneliness": "وحدة",
+    "Helplessness": "عجز",
+    "Shame": "خجل",
+    "Grief": "حداد",
+    "Confusion": "ارتباك",
+    "Joy": "فرح",
+    "Love": "حب",
+    "Surprise": "مفاجأة",
+    "Disgust": "اشمئزاز",
+    "Trust": "ثقة",
+    "Anticipation": "ترقب",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "هادئ",
+    "Serene": "صافٍ",
+    "Humorous": "فكاهي",
+    "Lighthearted": "مرح",
+    "Empowering": "تمكيني",
+    "Confident": "واثق",
+    "Optimistic": "متفائل",
+    "Inspiring": "مُلهم",
+    "Joyful": "بهيج",
+    "Cheerful": "مبتهج",
+    "Neutral": "محايد",
+
+    // MARK: - Trend Directions
+    "Improving": "يتحسن",
+    "Worsening": "يتدهور",
+    "Stable": "مستقر",
+
     // MARK: - Analysis Periods
     "7 Days": "٧ أيام",
     "30 Days": "٣٠ يوماً",

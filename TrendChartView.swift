@@ -216,7 +216,7 @@ struct TrendChartView: View {
                     Circle()
                         .fill(colorForEmotion(point.emotion))
                         .frame(width: 8, height: 8)
-                    Text(point.emotion.capitalized)
+                    Text(L(point.emotion.capitalized))
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(colorForEmotion(point.emotion))
                     Spacer()
@@ -256,8 +256,10 @@ struct TrendChartView: View {
                         RoundedRectangle(cornerRadius: 2)
                             .fill(isDimmed ? Color.gray.opacity(0.3) : colorForEmotion(emotion))
                             .frame(width: 12, height: 3)
-                        Text(emotion.capitalized)
+                        Text(L(emotion.capitalized))
                             .font(.system(size: 11, weight: .bold))
+                            .lineLimit(1)
+                            .fixedSize()
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
@@ -294,8 +296,10 @@ struct TrendChartView: View {
         HStack(spacing: 4) {
             Image(systemName: trendIcon)
                 .font(.caption.weight(.bold))
-            Text(trendDirection.capitalized)
+            Text(L(trendDirection.capitalized))
                 .font(.system(size: 11, weight: .bold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)

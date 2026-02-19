@@ -193,6 +193,42 @@ let strings_tr: [String: String] = [
     "We suggest rewriting this as a ": "Bunu şu şekilde yeniden yazmayı öneriyoruz: ",
     " dream": " rüya",
 
+    // MARK: - Emotions (from backend analysis)
+    "Fear": "Korku",
+    "Sadness": "Hüzün",
+    "Anger": "Öfke",
+    "Anxiety": "Kaygı",
+    "Stress": "Stres",
+    "Loneliness": "Yalnızlık",
+    "Helplessness": "Çaresizlik",
+    "Shame": "Utanç",
+    "Grief": "Yas",
+    "Confusion": "Kafa karışıklığı",
+    "Joy": "Sevinç",
+    "Love": "Aşk",
+    "Surprise": "Sürpriz",
+    "Disgust": "Tiksinti",
+    "Trust": "Güven",
+    "Anticipation": "Beklenti",
+
+    // MARK: - Moods (from backend suggested mood)
+    "Peaceful": "Huzurlu",
+    "Serene": "Sakin",
+    "Humorous": "Esprili",
+    "Lighthearted": "Neşeli",
+    "Empowering": "Güçlendirici",
+    "Confident": "Kendinden emin",
+    "Optimistic": "İyimser",
+    "Inspiring": "İlham verici",
+    "Joyful": "Sevinçli",
+    "Cheerful": "Şen",
+    "Neutral": "Nötr",
+
+    // MARK: - Trend Directions
+    "Improving": "İyileşiyor",
+    "Worsening": "Kötüleşiyor",
+    "Stable": "Sabit",
+
     // MARK: - Analysis Periods
     "7 Days": "7 Gün",
     "30 Days": "30 Gün",
