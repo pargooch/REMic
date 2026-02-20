@@ -107,18 +107,19 @@ class BackendService {
         }
     }
 
-    func register(email: String, password: String) async throws -> AuthResponse {
+    func register(email: String, password: String, turnstileToken: String) async throws -> AuthResponse {
         let url = try makeURL(path: "auth/register")
         let body: [String: Any] = [
             "email": email,
-            "password": password
+            "password": password,
+            "cf_turnstile_token": turnstileToken
         ]
         let data = try JSONSerialization.data(withJSONObject: body)
         let request = try makeRequest(url: url, method: "POST", body: data, requiresAuth: false)
         return try await send(request, as: AuthResponse.self)
     }
 
-    func register(email: String, password: String, profile: UserProfile) async throws -> AuthResponse {
+    func register(email: String, password: String, profile: UserProfile, turnstileToken: String) async throws -> AuthResponse {
         let url = try makeURL(path: "auth/register")
         var profileDict: [String: Any] = [:]
         if let gender = profile.gender { profileDict["gender"] = gender }
@@ -128,18 +129,20 @@ class BackendService {
         let body: [String: Any] = [
             "email": email,
             "password": password,
-            "profile": profileDict
+            "profile": profileDict,
+            "cf_turnstile_token": turnstileToken
         ]
         let data = try JSONSerialization.data(withJSONObject: body)
         let request = try makeRequest(url: url, method: "POST", body: data, requiresAuth: false)
         return try await send(request, as: AuthResponse.self)
     }
 
-    func login(email: String, password: String) async throws -> AuthResponse {
+    func login(email: String, password: String, turnstileToken: String) async throws -> AuthResponse {
         let url = try makeURL(path: "auth/login")
         let body: [String: Any] = [
             "email": email,
-            "password": password
+            "password": password,
+            "cf_turnstile_token": turnstileToken
         ]
         let data = try JSONSerialization.data(withJSONObject: body)
         let request = try makeRequest(url: url, method: "POST", body: data, requiresAuth: false)
@@ -315,6 +318,17 @@ class BackendService {
     func resendVerification() async throws -> MessageResponse {
         let url = try makeURL(path: "auth/resend-verification")
         let request = try makeRequest(url: url, method: "POST", requiresAuth: true)
+        return try await send(request, as: MessageResponse.self)
+    }
+
+    func forgotPassword(email: String, turnstileToken: String) async throws -> MessageResponse {
+        let url = try makeURL(path: "auth/forgot-password")
+        let body: [String: Any] = [
+            "email": email,
+            "cf_turnstile_token": turnstileToken
+        ]
+        let data = try JSONSerialization.data(withJSONObject: body)
+        let request = try makeRequest(url: url, method: "POST", body: data, requiresAuth: false)
         return try await send(request, as: MessageResponse.self)
     }
 

@@ -10,6 +10,7 @@ struct AuthView: View {
     @State private var gender: String = ""
     @State private var ageString: String = ""
     @State private var timezone: String = TimeZone.current.identifier
+    @State private var showForgotPassword = false
 
     var body: some View {
         ScrollView {
@@ -93,6 +94,18 @@ struct AuthView: View {
                     .opacity(isSubmitDisabled ? 0.5 : 1.0)
                 }
 
+                // Forgot password (login only)
+                if isLoginMode && !authManager.isLoading {
+                    Button {
+                        showForgotPassword = true
+                    } label: {
+                        Text(L("Forgot Password?"))
+                            .font(ComicTheme.Typography.comicButton(13))
+                            .foregroundColor(ComicTheme.Colors.crimsonRed)
+                    }
+                    .buttonStyle(.plain)
+                }
+
                 // Toggle mode
                 HStack(spacing: 6) {
                     Text(isLoginMode ? L("Need an account?") : L("Have an account?"))
@@ -121,6 +134,9 @@ struct AuthView: View {
         .halftoneBackground()
         .navigationTitle(isLoginMode ? L("Log In") : L("Sign Up"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showForgotPassword) {
+            ForgotPasswordSheet(prefillEmail: email)
+        }
     }
 
     private func submit() async {
@@ -201,5 +217,105 @@ struct ComicSecureField: View {
             RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
                 .stroke(ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.3), lineWidth: 2.0)
         )
+    }
+}
+
+// MARK: - Forgot Password Sheet
+
+struct ForgotPasswordSheet: View {
+    var prefillEmail: String = ""
+
+    @StateObject private var authManager = AuthManager.shared
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var email: String = ""
+    @State private var isSending = false
+    @State private var resultMessage: String?
+    @State private var isSuccess = false
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: ComicTheme.Dimensions.gutterWidth) {
+                    SoundEffectText(
+                        text: L("RESET!"),
+                        fillColor: ComicTheme.Colors.crimsonRed,
+                        fontSize: 28
+                    )
+                    .padding(.top, 8)
+
+                    ComicPanelCard(titleBanner: L("Forgot Password"), bannerColor: ComicTheme.Colors.crimsonRed) {
+                        VStack(spacing: 14) {
+                            Text(L("Enter your email address and we'll send you a link to reset your password."))
+                                .font(ComicTheme.Typography.speechBubble(13))
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            ComicTextField(
+                                icon: "envelope.fill",
+                                iconColor: ComicTheme.Colors.boldBlue,
+                                placeholder: L("Email"),
+                                text: $email,
+                                keyboardType: .emailAddress
+                            )
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                        }
+                    }
+
+                    if isSending {
+                        VStack(spacing: 12) {
+                            ProgressView()
+                                .tint(ComicTheme.Colors.crimsonRed)
+                            Text(L("Sending..."))
+                                .font(ComicTheme.Typography.speechBubble(13))
+                                .foregroundColor(.secondary)
+                        }
+                    } else {
+                        Button {
+                            Task { await sendReset() }
+                        } label: {
+                            Label(L("Send Reset Link"), systemImage: "envelope.arrow.triangle.branch")
+                        }
+                        .buttonStyle(.comicPrimary(color: ComicTheme.Colors.crimsonRed))
+                        .disabled(email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .opacity(email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1.0)
+                    }
+
+                    if let resultMessage {
+                        Text(resultMessage)
+                            .font(ComicTheme.Typography.speechBubble(13))
+                            .foregroundColor(isSuccess ? ComicTheme.Colors.emeraldGreen : ComicTheme.Colors.crimsonRed)
+                            .speechBubble()
+                    }
+                }
+                .padding()
+            }
+            .halftoneBackground()
+            .navigationTitle(L("Forgot Password"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L("Cancel")) {
+                        dismiss()
+                    }
+                    .foregroundStyle(ComicTheme.Colors.crimsonRed)
+                    .fontWeight(.bold)
+                }
+            }
+        }
+        .onAppear {
+            if email.isEmpty {
+                email = prefillEmail
+            }
+        }
+    }
+
+    private func sendReset() async {
+        isSending = true
+        let message = await authManager.requestPasswordReset(email: email.trimmingCharacters(in: .whitespacesAndNewlines))
+        isSending = false
+        resultMessage = message
+        isSuccess = !message.lowercased().contains("fail") && !message.lowercased().contains("error")
     }
 }

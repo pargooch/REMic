@@ -78,8 +78,9 @@ class AuthManager: ObservableObject {
     private let emailVerifiedKey = "emailVerified"
     
     // MARK: - Services
-    
+
     private let backendService = BackendService.shared
+    private let turnstileService = TurnstileService.shared
     
     // MARK: - Initialization
     
@@ -98,14 +99,15 @@ class AuthManager: ObservableObject {
             isLoading = true
             error = nil
         }
-        
+
         do {
-            let response = try await backendService.register(email: email, password: password)
+            let turnstileToken = try await turnstileService.getToken()
+            let response = try await backendService.register(email: email, password: password, turnstileToken: turnstileToken)
             await handleAuthSuccess(response: response, email: email)
         } catch {
             await handleAuthError(error)
         }
-        
+
         await MainActor.run {
             isLoading = false
         }
@@ -123,7 +125,8 @@ class AuthManager: ObservableObject {
         }
 
         do {
-            let response = try await backendService.register(email: email, password: password, profile: profile)
+            let turnstileToken = try await turnstileService.getToken()
+            let response = try await backendService.register(email: email, password: password, profile: profile, turnstileToken: turnstileToken)
             await handleAuthSuccess(response: response, email: email)
         } catch {
             await handleAuthError(error)
@@ -133,7 +136,7 @@ class AuthManager: ObservableObject {
             isLoading = false
         }
     }
-    
+
     /// Login an existing user
     /// - Parameters:
     ///   - email: User's email address
@@ -143,14 +146,15 @@ class AuthManager: ObservableObject {
             isLoading = true
             error = nil
         }
-        
+
         do {
-            let response = try await backendService.login(email: email, password: password)
+            let turnstileToken = try await turnstileService.getToken()
+            let response = try await backendService.login(email: email, password: password, turnstileToken: turnstileToken)
             await handleAuthSuccess(response: response, email: email)
         } catch {
             await handleAuthError(error)
         }
-        
+
         await MainActor.run {
             isLoading = false
         }
@@ -230,6 +234,22 @@ class AuthManager: ObservableObject {
             }
         } catch {
             print("Failed to refresh user: \(error)")
+        }
+    }
+
+    /// Request password reset email. Returns a user-facing message.
+    func requestPasswordReset(email: String) async -> String {
+        do {
+            let turnstileToken = try await turnstileService.getToken()
+            let response = try await backendService.forgotPassword(email: email, turnstileToken: turnstileToken)
+            return response.message ?? L("Password reset email sent!")
+        } catch let error as BackendError {
+            if case .serverError(_, let message) = error {
+                return message ?? L("Failed to send reset email")
+            }
+            return error.localizedDescription
+        } catch {
+            return error.localizedDescription
         }
     }
 
