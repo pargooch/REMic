@@ -1,17 +1,15 @@
 import SwiftUI
 
-struct ContentView: View {
+struct DreamsListView: View {
     @EnvironmentObject var store: DreamStore
     @ObservedObject private var authManager = AuthManager.shared
-    @State private var showNewDream = false
-    @State private var showSettings = false
-    @State private var showAnalysis = false
     @State private var searchText = ""
     @State private var resendMessage: String?
     @State private var isResending = false
     @State private var isSelectMode = false
     @State private var selectedDreamIDs: Set<UUID> = []
     @State private var showDeleteConfirmation = false
+    @State private var showNewDream = false
 
     private var filteredDreams: [Dream] {
         guard !searchText.isEmpty else { return store.dreams }
@@ -24,147 +22,124 @@ struct ContentView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .bottom) {
-                ScrollView {
-                    if authManager.isAuthenticated && !authManager.emailVerified {
-                        emailVerificationBanner
-                    }
-                    LazyVStack(spacing: ComicTheme.Dimensions.gutterWidth) {
-                        if store.dreams.isEmpty {
-                            emptyState
-                        } else if filteredDreams.isEmpty {
-                            Text(L("No dreams match your search"))
-                                .font(ComicTheme.Typography.speechBubble(13))
-                                .foregroundColor(.secondary)
-                                .padding(.top, 40)
-                        } else {
-                            ForEach(filteredDreams) { dream in
-                                if isSelectMode {
-                                    Button {
-                                        toggleSelection(dream.id)
-                                    } label: {
-                                        HStack(spacing: 12) {
-                                            Image(systemName: selectedDreamIDs.contains(dream.id) ? "checkmark.circle.fill" : "circle")
-                                                .font(.system(size: 22, weight: .medium))
-                                                .foregroundColor(selectedDreamIDs.contains(dream.id) ? ComicTheme.Colors.boldBlue : .secondary)
-                                            DreamRowView(dream: dream)
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                } else {
-                                    NavigationLink {
-                                        DreamDetailView(dream: dream)
-                                    } label: {
+        ZStack(alignment: .bottom) {
+            ScrollView {
+                if authManager.isAuthenticated && !authManager.emailVerified {
+                    emailVerificationBanner
+                }
+                LazyVStack(spacing: ComicTheme.Dimensions.gutterWidth) {
+                    if store.dreams.isEmpty {
+                        emptyState
+                    } else if filteredDreams.isEmpty {
+                        Text(L("No dreams match your search"))
+                            .font(ComicTheme.Typography.speechBubble(13))
+                            .foregroundColor(.secondary)
+                            .padding(.top, 40)
+                    } else {
+                        ForEach(filteredDreams) { dream in
+                            if isSelectMode {
+                                Button {
+                                    toggleSelection(dream.id)
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: selectedDreamIDs.contains(dream.id) ? "checkmark.circle.fill" : "circle")
+                                            .font(.system(size: 22, weight: .medium))
+                                            .foregroundColor(selectedDreamIDs.contains(dream.id) ? ComicTheme.Colors.boldBlue : .secondary)
                                         DreamRowView(dream: dream)
                                     }
-                                    .buttonStyle(.plain)
                                 }
+                                .buttonStyle(.plain)
+                            } else {
+                                NavigationLink {
+                                    DreamDetailView(dream: dream)
+                                } label: {
+                                    DreamRowView(dream: dream)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
-                    .padding()
-                    // Extra bottom padding when delete bar is visible
-                    .padding(.bottom, isSelectMode ? 70 : 0)
                 }
-                .halftoneBackground()
-                .navigationTitle(L("Dreams"))
-                .searchable(text: $searchText, prompt: Text(L("Search dreams...")))
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        if isSelectMode {
-                            Button(L("Cancel")) {
-                                exitSelectMode()
+                .padding()
+                .padding(.bottom, isSelectMode ? 70 : 0)
+            }
+            .halftoneBackground()
+            .navigationTitle(L("Dreams"))
+            .searchable(text: $searchText, prompt: Text(L("Search dreams...")))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if isSelectMode {
+                        Button(L("Cancel")) {
+                            exitSelectMode()
+                        }
+                    } else {
+                        NavigationLink {
+                            CalendarDreamsView()
+                        } label: {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundStyle(ComicTheme.Colors.deepPurple)
+                        }
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if isSelectMode {
+                        Button {
+                            if selectedDreamIDs.count == filteredDreams.count {
+                                selectedDreamIDs.removeAll()
+                            } else {
+                                selectedDreamIDs = Set(filteredDreams.map(\.id))
                             }
-                        } else {
-                            HStack(spacing: 12) {
+                        } label: {
+                            Text(selectedDreamIDs.count == filteredDreams.count ? L("Deselect All") : L("Select All"))
+                                .font(.subheadline.weight(.semibold))
+                        }
+                    } else {
+                        HStack(spacing: 12) {
+                            if !store.dreams.isEmpty {
                                 Button {
-                                    showSettings = true
+                                    isSelectMode = true
                                 } label: {
-                                    Image(systemName: "gearshape.fill")
+                                    Image(systemName: "trash")
                                         .font(.system(size: 18, weight: .bold))
-                                        .foregroundStyle(ComicTheme.Colors.deepPurple)
-                                }
-
-                                if AuthManager.shared.isAuthenticated {
-                                    Button {
-                                        showAnalysis = true
-                                    } label: {
-                                        Image(systemName: "chart.line.uptrend.xyaxis")
-                                            .font(.system(size: 18, weight: .bold))
-                                            .foregroundStyle(ComicTheme.Colors.hotPink)
-                                    }
+                                        .foregroundStyle(ComicTheme.Colors.crimsonRed)
                                 }
                             }
-                        }
-                    }
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        if isSelectMode {
                             Button {
-                                if selectedDreamIDs.count == filteredDreams.count {
-                                    selectedDreamIDs.removeAll()
-                                } else {
-                                    selectedDreamIDs = Set(filteredDreams.map(\.id))
-                                }
+                                showNewDream = true
                             } label: {
-                                Text(selectedDreamIDs.count == filteredDreams.count ? L("Deselect All") : L("Select All"))
-                                    .font(.subheadline.weight(.semibold))
-                            }
-                        } else {
-                            HStack(spacing: 12) {
-                                if !store.dreams.isEmpty {
-                                    Button {
-                                        isSelectMode = true
-                                    } label: {
-                                        Image(systemName: "trash")
-                                            .font(.system(size: 18, weight: .bold))
-                                            .foregroundStyle(ComicTheme.Colors.crimsonRed)
-                                    }
-                                }
-                                Button {
-                                    showNewDream = true
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 22, weight: .bold))
-                                        .foregroundStyle(ComicTheme.Colors.boldBlue)
-                                }
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 22, weight: .bold))
+                                    .foregroundStyle(ComicTheme.Colors.boldBlue)
                             }
                         }
                     }
                 }
-                .sheet(isPresented: $showNewDream) {
+            }
+            .sheet(isPresented: $showNewDream) {
+                NavigationStack {
                     NewDreamView()
                 }
-                .sheet(isPresented: $showSettings) {
-                    NavigationView {
-                        SettingsView()
-                    }
-                }
-                .sheet(isPresented: $showAnalysis) {
-                    NavigationView {
-                        DreamAnalysisView()
-                    }
-                }
+            }
 
-                // Delete bar at bottom
-                if isSelectMode {
-                    deleteBar
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+            // Delete bar at bottom
+            if isSelectMode {
+                deleteBar
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
-            .animation(.easeInOut(duration: 0.25), value: isSelectMode)
-            .confirmationDialog(
-                L("Delete %lld dreams?", selectedDreamIDs.count),
-                isPresented: $showDeleteConfirmation,
-                titleVisibility: .visible
-            ) {
-                Button(L("Delete"), role: .destructive) {
-                    deleteSelectedDreams()
-                }
-                Button(L("Cancel"), role: .cancel) {}
-            } message: {
-                Text(L("This will permanently remove the selected dreams and all their content."))
+        }
+        .animation(.easeInOut(duration: 0.25), value: isSelectMode)
+        .confirmationDialog(
+            L("Delete %lld dreams?", selectedDreamIDs.count),
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(L("Delete"), role: .destructive) {
+                deleteSelectedDreams()
             }
+            Button(L("Cancel"), role: .cancel) {}
+        } message: {
+            Text(L("This will permanently remove the selected dreams and all their content."))
         }
     }
 
@@ -228,13 +203,6 @@ struct ContentView: View {
                     .font(ComicTheme.Typography.speechBubble())
                     .multilineTextAlignment(.center)
                     .speechBubble()
-
-                Button {
-                    showNewDream = true
-                } label: {
-                    Label(L("Capture a Dream"), systemImage: "moon.stars.fill")
-                }
-                .buttonStyle(.comicPrimary(color: ComicTheme.Colors.deepPurple))
             }
         }
         .padding(.top, 40)
@@ -382,6 +350,8 @@ struct DreamRowView: View {
 }
 
 #Preview {
-    ContentView()
-        .environmentObject(DreamStore())
+    NavigationStack {
+        DreamsListView()
+            .environmentObject(DreamStore())
+    }
 }

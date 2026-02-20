@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct NewDreamView: View {
+    var isTab: Bool = false
+    var onDreamSaved: ((UUID) -> Void)?
+
     @EnvironmentObject var store: DreamStore
     @Environment(\.dismiss) var dismiss
     @Environment(DreamAnalysisService.self) private var analysisService
@@ -10,8 +13,7 @@ struct NewDreamView: View {
     @State private var speechService = SpeechRecognitionService()
 
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 20) {
                     Text(L("What did you dream?"))
                         .font(ComicTheme.Typography.speechBubble())
@@ -97,7 +99,15 @@ struct NewDreamView: View {
                                 }
                             }
                         }
-                        dismiss()
+                        if isTab {
+                            let savedID = dream.id
+                            dreamText = ""
+                            dreamDate = Date()
+                            speechService.stopRecording()
+                            onDreamSaved?(savedID)
+                        } else {
+                            dismiss()
+                        }
                     } label: {
                         Label(L("Save Dream"), systemImage: "checkmark.circle.fill")
                     }
@@ -115,12 +125,14 @@ struct NewDreamView: View {
             .navigationTitle(L("New Dream"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L("Cancel")) {
-                        dismiss()
+                if !isTab {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(L("Cancel")) {
+                            dismiss()
+                        }
+                        .foregroundStyle(ComicTheme.Colors.crimsonRed)
+                        .fontWeight(.bold)
                     }
-                    .foregroundStyle(ComicTheme.Colors.crimsonRed)
-                    .fontWeight(.bold)
                 }
             }
             .onChange(of: speechService.transcribedText) { _, newValue in
@@ -131,7 +143,6 @@ struct NewDreamView: View {
             .onDisappear {
                 speechService.stopRecording()
             }
-        }
     }
 }
 

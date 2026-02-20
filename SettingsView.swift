@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @StateObject private var authManager = AuthManager.shared
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
@@ -87,17 +86,6 @@ struct SettingsView: View {
         .halftoneBackground()
         .navigationTitle(L("Settings"))
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
     }
 }
 

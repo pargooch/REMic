@@ -4,6 +4,7 @@ import UserNotifications
 @main
 struct REMicApp: App {
     @StateObject var store = DreamStore()
+    @StateObject private var authManager = AuthManager.shared
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var landingOpacity: Double = 1.0
     @State private var landingFinished = false
@@ -15,14 +16,22 @@ struct REMicApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                ContentView()
-                    .environmentObject(store)
-                    .environment(analysisService)
-                    .onAppear {
-                        _ = NotificationManager.shared
-                        KeyboardDismissHelper.setupGlobalDoneButton()
-                        KeyboardDismissHelper.setupTapToDismiss()
+                Group {
+                    if authManager.isAuthenticated {
+                        MainTabView()
+                    } else {
+                        NavigationStack {
+                            AuthView()
+                        }
                     }
+                }
+                .environmentObject(store)
+                .environment(analysisService)
+                .onAppear {
+                    _ = NotificationManager.shared
+                    KeyboardDismissHelper.setupGlobalDoneButton()
+                    KeyboardDismissHelper.setupTapToDismiss()
+                }
 
                 if !landingFinished {
                     LandingAnimationView {

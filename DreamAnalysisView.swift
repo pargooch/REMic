@@ -4,7 +4,6 @@ import Charts
 struct DreamAnalysisView: View {
     @EnvironmentObject var store: DreamStore
     @Environment(DreamAnalysisService.self) private var analysisService
-    @Environment(\.dismiss) private var dismiss
     @State private var isReanalyzing = false
     @State private var reanalyzeProgress = 0
     @State private var reanalyzeTotal = 0
@@ -87,12 +86,6 @@ struct DreamAnalysisView: View {
         .navigationTitle(L("Dream Analysis"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(L("Done")) { dismiss() }
-                    .foregroundStyle(ComicTheme.Colors.hotPink)
-                    .fontWeight(.bold)
-            }
-            // TEMP: Re-analyze all dreams with correct entry dates
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     Task { await reanalyzeAllDreams() }
