@@ -1,15 +1,12 @@
 import SwiftUI
 import PhotosUI
-import Combine
 
-/// Avatar selection flow: Memoji sticker, Photo Library, Camera, or Remove
+/// Avatar selection flow: Photo Library, Camera, or Remove
 struct AvatarPickerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @StateObject private var authManager = AuthManager.shared
 
-    @State private var showMemojiBridge = false
-    @State private var showPhotoPicker = false
     @State private var showCamera = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var previewImage: UIImage?
@@ -75,26 +72,11 @@ struct AvatarPickerView: View {
                         // Action buttons
                         ComicPanelCard(titleBanner: L("Choose Avatar"), bannerColor: ComicTheme.Colors.boldBlue) {
                             VStack(spacing: 12) {
-                                Button {
-                                    showMemojiBridge = true
-                                } label: {
-                                    Label(L("Use Memoji"), systemImage: "face.smiling")
+                                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                                    Label(L("Choose Photo or Memoji"), systemImage: "photo.on.rectangle")
+                                        .frame(maxWidth: .infinity)
                                 }
                                 .buttonStyle(.comicPrimary(color: ComicTheme.Colors.boldBlue))
-
-                                PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                                    Label(L("Choose Photo"), systemImage: "photo.on.rectangle")
-                                        .frame(maxWidth: .infinity)
-                                        .font(ComicTheme.Typography.comicButton(16))
-                                        .padding(.vertical, 12)
-                                        .background(ComicTheme.Semantic.cardSurface(colorScheme))
-                                        .foregroundColor(ComicTheme.Colors.boldBlue)
-                                        .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
-                                                .stroke(ComicTheme.Colors.boldBlue, lineWidth: 2.5)
-                                        )
-                                }
 
                                 Button {
                                     showCamera = true
@@ -111,6 +93,19 @@ struct AvatarPickerView: View {
                                     }
                                     .buttonStyle(.comicDestructive)
                                 }
+                            }
+                        }
+
+                        // Memoji tip
+                        ComicPanelCard(bannerColor: ComicTheme.Colors.deepPurple) {
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: "face.smiling")
+                                    .font(.body.weight(.bold))
+                                    .foregroundColor(ComicTheme.Colors.deepPurple)
+                                    .frame(width: 24)
+                                Text(L("To use your Memoji, save it as a sticker image to your Photos first, then select it here."))
+                                    .font(ComicTheme.Typography.speechBubble(12))
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }
@@ -146,14 +141,6 @@ struct AvatarPickerView: View {
                         dismiss()
                     }
                 }
-            }
-            .sheet(isPresented: $showMemojiBridge) {
-                MemojiCaptureView(onSave: { image in
-                    previewImage = image
-                    showMemojiBridge = false
-                }, onCancel: {
-                    showMemojiBridge = false
-                })
             }
             .sheet(isPresented: $showCamera) {
                 CameraPickerView { image in
@@ -200,14 +187,12 @@ struct AvatarPickerView: View {
                     }
                 } catch {
                     await MainActor.run {
-                        // Store locally even if upload fails
                         authManager.setAvatar(imageData: pngData, description: "User avatar")
                         isUploading = false
                         dismiss()
                     }
                 }
             } else {
-                // Store locally only
                 await MainActor.run {
                     authManager.setAvatar(imageData: pngData, description: "User avatar")
                     isUploading = false
@@ -238,273 +223,6 @@ struct AvatarPickerView: View {
         let renderer = UIGraphicsImageRenderer(size: newSize)
         return renderer.image { _ in
             image.draw(in: CGRect(origin: .zero, size: newSize))
-        }
-    }
-}
-
-// MARK: - Sticker Text View (intercepts paste for Memoji stickers)
-
-class StickerTextView: UITextView {
-    var onStickerImage: ((UIImage) -> Void)?
-
-    override func paste(_ sender: Any?) {
-        // Intercept: grab the sticker image directly from clipboard before UITextView processes it
-        if let image = UIPasteboard.general.image {
-            onStickerImage?(image)
-        }
-        super.paste(sender)
-    }
-}
-
-// MARK: - Memoji Input State (bridges UITextView ↔ SwiftUI)
-
-class MemojiInputState: ObservableObject {
-    @Published var hasContent = false
-    weak var textView: UITextView?
-
-    /// Try every possible way to extract a sticker image
-    func captureImage() -> UIImage? {
-        if let image = extractFromAttachments() { return image }
-        if let image = UIPasteboard.general.image { return image }
-        return nil
-    }
-
-    private func extractFromAttachments() -> UIImage? {
-        guard let textView = textView else { return nil }
-        let attrText = textView.attributedText ?? NSAttributedString()
-        guard attrText.length > 0 else { return nil }
-
-        var found: UIImage?
-        attrText.enumerateAttribute(.attachment, in: NSRange(location: 0, length: attrText.length)) { value, _, stop in
-            guard let attachment = value as? NSTextAttachment else { return }
-            if let img = attachment.image {
-                found = img; stop.pointee = true; return
-            }
-            if let data = attachment.fileWrapper?.regularFileContents, let img = UIImage(data: data) {
-                found = img; stop.pointee = true; return
-            }
-            if let data = attachment.contents, let img = UIImage(data: data) {
-                found = img; stop.pointee = true; return
-            }
-            if let img = attachment.image(forBounds: attachment.bounds, textContainer: nil, characterIndex: 0) {
-                found = img; stop.pointee = true; return
-            }
-        }
-        return found
-    }
-}
-
-// MARK: - Memoji Capture View (Comic-themed)
-
-struct MemojiCaptureView: View {
-    let onSave: (UIImage) -> Void
-    let onCancel: () -> Void
-    @Environment(\.colorScheme) private var colorScheme
-    @State private var capturedImage: UIImage?
-    @StateObject private var inputState = MemojiInputState()
-
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: ComicTheme.Dimensions.gutterWidth) {
-                    // Instructions
-                    ComicPanelCard(titleBanner: L("How To"), bannerColor: ComicTheme.Colors.boldBlue) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            instructionRow(number: 1, text: L("Tap the area below to open the keyboard"))
-                            instructionRow(number: 2, text: L("Tap") + " 🌐 " + L("to switch to emoji keyboard"))
-                            instructionRow(number: 3, text: L("Swipe to find Memoji stickers and tap one"))
-                        }
-                    }
-
-                    // Input area
-                    ComicPanelCard(titleBanner: L("Enter Memoji"), bannerColor: ComicTheme.Colors.deepPurple) {
-                        MemojiInputField(onImageCaptured: { image in
-                            capturedImage = image
-                        }, inputState: inputState)
-                        .frame(height: 120)
-                        .background(ComicTheme.Semantic.cardSurface(colorScheme))
-                        .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
-                                .stroke(ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.3), lineWidth: 2.0)
-                        )
-                    }
-
-                    if let image = capturedImage {
-                        // Preview + Use button
-                        ComicPanelCard(titleBanner: L("Preview"), bannerColor: ComicTheme.Colors.emeraldGreen) {
-                            VStack(spacing: 16) {
-                                HStack {
-                                    Spacer()
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 120, height: 120)
-                                        .clipShape(Circle())
-                                        .overlay(
-                                            Circle()
-                                                .stroke(
-                                                    ComicTheme.panelBorderColor(colorScheme),
-                                                    lineWidth: ComicTheme.Dimensions.panelBorderWidth
-                                                )
-                                        )
-                                    Spacer()
-                                }
-
-                                Button {
-                                    onSave(image)
-                                } label: {
-                                    Label(L("Use This Memoji"), systemImage: "checkmark.circle.fill")
-                                }
-                                .buttonStyle(.comicPrimary(color: ComicTheme.Colors.emeraldGreen))
-                            }
-                        }
-                    }
-
-                    // Paste fallback
-                    Button {
-                        if let image = UIPasteboard.general.image {
-                            capturedImage = image
-                        }
-                    } label: {
-                        Label(L("Paste from Clipboard"), systemImage: "doc.on.clipboard")
-                    }
-                    .buttonStyle(.comicSecondary(color: ComicTheme.Colors.boldBlue))
-                }
-                .padding()
-            }
-            .halftoneBackground()
-            .navigationTitle(L("Memoji"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(L("Cancel")) {
-                        onCancel()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(L("Done")) {
-                        if let image = capturedImage {
-                            onSave(image)
-                        } else if let image = inputState.captureImage() {
-                            onSave(image)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func instructionRow(number: Int, text: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Text("\(number)")
-                .font(ComicTheme.Typography.comicButton(12))
-                .foregroundColor(.white)
-                .frame(width: 22, height: 22)
-                .background(ComicTheme.Colors.boldBlue)
-                .clipShape(Circle())
-            Text(text)
-                .font(ComicTheme.Typography.speechBubble(14))
-                .foregroundColor(.primary)
-        }
-    }
-}
-
-// MARK: - Memoji Input Field (StickerTextView wrapper)
-
-struct MemojiInputField: UIViewRepresentable {
-    let onImageCaptured: (UIImage) -> Void
-    let inputState: MemojiInputState
-
-    func makeUIView(context: Context) -> StickerTextView {
-        let textView = StickerTextView()
-        textView.font = .systemFont(ofSize: 48)
-        textView.textAlignment = .center
-        textView.backgroundColor = .clear
-        textView.allowsEditingTextAttributes = true
-        textView.delegate = context.coordinator
-        textView.onStickerImage = { image in
-            context.coordinator.onImageCaptured(image)
-        }
-        inputState.textView = textView
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            textView.becomeFirstResponder()
-        }
-        return textView
-    }
-
-    func updateUIView(_ uiView: StickerTextView, context: Context) {
-        context.coordinator.onImageCaptured = onImageCaptured
-        uiView.onStickerImage = { image in
-            context.coordinator.onImageCaptured(image)
-        }
-        inputState.textView = uiView
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onImageCaptured: onImageCaptured, inputState: inputState)
-    }
-
-    class Coordinator: NSObject, UITextViewDelegate {
-        var onImageCaptured: (UIImage) -> Void
-        let inputState: MemojiInputState
-        private var clipboardTimer: Timer?
-        private var lastPasteboardChangeCount: Int
-
-        init(onImageCaptured: @escaping (UIImage) -> Void, inputState: MemojiInputState) {
-            self.onImageCaptured = onImageCaptured
-            self.inputState = inputState
-            self.lastPasteboardChangeCount = UIPasteboard.general.changeCount
-            super.init()
-            // Must use .common mode so the timer fires while the keyboard is active (.tracking mode)
-            let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
-                self?.checkClipboard()
-            }
-            RunLoop.main.add(timer, forMode: .common)
-            clipboardTimer = timer
-        }
-
-        deinit {
-            clipboardTimer?.invalidate()
-        }
-
-        func textViewDidChange(_ textView: UITextView) {
-            let attrText = textView.attributedText ?? NSAttributedString()
-
-            DispatchQueue.main.async {
-                self.inputState.hasContent = attrText.length > 0
-            }
-
-            // Robust NSTextAttachment image extraction
-            attrText.enumerateAttribute(.attachment, in: NSRange(location: 0, length: attrText.length)) { value, _, stop in
-                guard let attachment = value as? NSTextAttachment else { return }
-                var image: UIImage?
-                if let img = attachment.image {
-                    image = img
-                } else if let data = attachment.fileWrapper?.regularFileContents, let img = UIImage(data: data) {
-                    image = img
-                } else if let data = attachment.contents, let img = UIImage(data: data) {
-                    image = img
-                } else if let img = attachment.image(forBounds: attachment.bounds, textContainer: nil, characterIndex: 0) {
-                    image = img
-                }
-                if let image = image {
-                    DispatchQueue.main.async { self.onImageCaptured(image) }
-                    stop.pointee = true
-                }
-            }
-        }
-
-        private func checkClipboard() {
-            let currentCount = UIPasteboard.general.changeCount
-            guard currentCount != lastPasteboardChangeCount else { return }
-            lastPasteboardChangeCount = currentCount
-            if let image = UIPasteboard.general.image {
-                DispatchQueue.main.async {
-                    self.onImageCaptured(image)
-                }
-            }
         }
     }
 }
