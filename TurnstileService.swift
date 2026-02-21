@@ -168,15 +168,16 @@ class TurnstileService: NSObject, ObservableObject {
 extension TurnstileService: WKScriptMessageHandler {
     nonisolated func userContentController(_ userContentController: WKUserContentController,
                                            didReceive message: WKScriptMessage) {
-        guard let body = message.body as? String,
-              let data = body.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: String],
-              let type = json["type"],
-              let value = json["value"] else {
-            return
-        }
-
+        let rawBody = (message as NSObject).value(forKey: "body")
         Task { @MainActor in
+            guard let body = rawBody as? String,
+                  let data = body.data(using: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: String],
+                  let type = json["type"],
+                  let value = json["value"] else {
+                return
+            }
+
             switch type {
             case "token":
                 // Success — dismiss and return the token

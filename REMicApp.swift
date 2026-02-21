@@ -160,7 +160,7 @@ enum KeyboardDismissHelper {
         let toolbar = UIToolbar()
         toolbar.sizeToFit()
         let spacer = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        let doneButton = UIBarButtonItem(title: L("Done"), style: .done, target: nil, action: #selector(UIApplication.dismissKeyboard))
+        let doneButton = UIBarButtonItem(title: L("Done"), style: .prominent, target: nil, action: #selector(UIApplication.dismissKeyboard))
         toolbar.items = [spacer, doneButton]
 
         UITextView.appearance().inputAccessoryView = toolbar
