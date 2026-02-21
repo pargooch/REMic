@@ -441,13 +441,13 @@ struct ToneChipStyle: ButtonStyle {
         configuration.label
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(isSelected ? ComicTheme.Colors.crimsonRed : Color.clear)
+            .background(isSelected ? Color(red: 0xF2/255, green: 0x08/255, blue: 0x15/255) : Color.clear)
             .foregroundStyle(isSelected ? .white : .primary)
             .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.badgeCornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: ComicTheme.Dimensions.badgeCornerRadius)
                     .stroke(
-                        isSelected ? ComicTheme.Colors.crimsonRed : ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.4),
+                        isSelected ? Color(red: 0xF2/255, green: 0x08/255, blue: 0x15/255) : ComicTheme.Semantic.panelBorder(colorScheme).opacity(0.4),
                         lineWidth: isSelected ? 2.5 : 1.5
                     )
             )

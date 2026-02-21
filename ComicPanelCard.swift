@@ -58,30 +58,32 @@ struct ArtDecoCornerOrnament: Shape {
 struct ComicPanelCard<Content: View>: View {
     let titleBanner: String?
     let bannerColor: Color
+    let cardBackground: Color?
     let content: Content
     @Environment(\.colorScheme) private var colorScheme
 
     init(
         titleBanner: String? = nil,
         bannerColor: Color = ComicTheme.Semantic.primaryAction,
+        cardBackground: Color? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.titleBanner = titleBanner
         self.bannerColor = bannerColor
+        self.cardBackground = cardBackground
         self.content = content()
     }
 
     private var bannerTextColor: Color {
-        if colorScheme == .light && bannerColor == ComicTheme.Palette.goldenYellow {
-            return ComicTheme.Palette.antiqueBrass
-        }
         return bannerColor
+    }
+
+    private var resolvedBackground: Color {
+        cardBackground ?? ComicTheme.Semantic.cardSurface(colorScheme)
     }
 
     var body: some View {
         let outerRadius = ComicTheme.Dimensions.panelCornerRadius
-        let innerInset = ComicTheme.Dimensions.panelBorderGap + ComicTheme.Dimensions.panelBorderWidth
-        let innerRadius = max(outerRadius - innerInset, 0)
 
         VStack(alignment: .leading, spacing: 0) {
             if let title = titleBanner {
@@ -91,9 +93,9 @@ struct ComicPanelCard<Content: View>: View {
             content
                 .padding()
         }
-        .background(ComicTheme.Semantic.cardSurface(colorScheme))
+        .background(resolvedBackground)
         .clipShape(RoundedRectangle(cornerRadius: outerRadius))
-        // Outer border
+        // Outer border — thin black
         .overlay(
             RoundedRectangle(cornerRadius: outerRadius)
                 .stroke(
@@ -101,17 +103,6 @@ struct ComicPanelCard<Content: View>: View {
                     lineWidth: ComicTheme.Dimensions.panelBorderWidth
                 )
         )
-        // Inner border
-        .overlay(
-            RoundedRectangle(cornerRadius: innerRadius)
-                .stroke(
-                    ComicTheme.Semantic.frameBorderInner(colorScheme),
-                    lineWidth: ComicTheme.Dimensions.panelInnerBorderWidth
-                )
-                .padding(innerInset)
-        )
-        // Corner ornaments
-        .overlay(cornerOrnaments)
     }
 
     // MARK: - Art Deco Banner
@@ -147,33 +138,5 @@ struct ComicPanelCard<Content: View>: View {
                 .frame(height: 0.5)
                 .padding(.horizontal, 12)
         }
-        .background(bannerColor.opacity(0.06))
-    }
-
-    // MARK: - Corner Ornaments
-
-    private var cornerOrnaments: some View {
-        let ornamentColor = ComicTheme.Semantic.cornerOrnament(colorScheme)
-        let arm = ComicTheme.Dimensions.cornerOrnamentSize
-        let thickness: CGFloat = 1.5
-
-        return GeometryReader { geo in
-            ArtDecoCornerOrnament(corner: .topLeading, armLength: arm, thickness: thickness)
-                .fill(ornamentColor)
-                .frame(width: geo.size.width, height: geo.size.height)
-
-            ArtDecoCornerOrnament(corner: .topTrailing, armLength: arm, thickness: thickness)
-                .fill(ornamentColor)
-                .frame(width: geo.size.width, height: geo.size.height)
-
-            ArtDecoCornerOrnament(corner: .bottomLeading, armLength: arm, thickness: thickness)
-                .fill(ornamentColor)
-                .frame(width: geo.size.width, height: geo.size.height)
-
-            ArtDecoCornerOrnament(corner: .bottomTrailing, armLength: arm, thickness: thickness)
-                .fill(ornamentColor)
-                .frame(width: geo.size.width, height: geo.size.height)
-        }
-        .allowsHitTesting(false)
     }
 }

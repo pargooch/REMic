@@ -76,16 +76,11 @@ struct ComicBackground: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        ZStack {
-            (colorScheme == .dark
-                ? ComicTheme.Semantic.background(colorScheme)
-                : (baseColor ?? ComicTheme.Semantic.background(colorScheme)))
-                .ignoresSafeArea()
-
-            ArtDecoBackground(lineSpacing: 24, opacity: 0.035)
-                .ignoresSafeArea()
-        }
-        .allowsHitTesting(false)
+        (colorScheme == .dark
+            ? ComicTheme.Semantic.background(colorScheme)
+            : (baseColor ?? ComicTheme.Palette.appBackground))
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
     }
 }
 

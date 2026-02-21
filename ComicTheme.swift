@@ -21,19 +21,22 @@ enum ComicTheme {
         static let antiqueBrass   = Color(red: 0xB0/255, green: 0x8D/255, blue: 0x57/255)
         static let champagneGold  = Color(red: 0xD4/255, green: 0xAF/255, blue: 0x6A/255)
 
-        // Paper & surface tones (vintage, never pure white)
-        static let agedPaper       = Color(red: 0xF5/255, green: 0xE6/255, blue: 0xCA/255)
+        // Paper & surface tones
+        static let agedPaper       = Color(red: 0xF7/255, green: 0xF4/255, blue: 0xDB/255)
         static let agedPaperDark   = Color(red: 0x2A/255, green: 0x24/255, blue: 0x1E/255)
         static let panelSurface    = Color(red: 0xFB/255, green: 0xF2/255, blue: 0xDB/255)
         static let panelSurfaceDark = Color(red: 0x33/255, green: 0x2C/255, blue: 0x24/255)
 
-        // Per-page background tints (light mode only)
-        static let bgNewDream      = Color(red: 0xF4/255, green: 0xBE/255, blue: 0xAE/255)
-        static let bgDreams        = Color(red: 0xEF/255, green: 0xCE/255, blue: 0x7B/255)
-        static let bgAnalysis      = Color(red: 0x93/255, green: 0xD3/255, blue: 0xAE/255)
-        static let bgSettings      = Color(red: 0xFA/255, green: 0xEC/255, blue: 0xD0/255)
-        static let bgNotifications = Color(red: 0xE8/255, green: 0xCC/255, blue: 0xAD/255)
-        static let bgAccount       = Color(red: 0xF1/255, green: 0xF3/255, blue: 0xD0/255)
+        // Unified app background (#F7F4DB)
+        static let appBackground   = Color(red: 0xF7/255, green: 0xF4/255, blue: 0xDB/255)
+
+        // Per-page backgrounds (all unified)
+        static let bgNewDream      = appBackground
+        static let bgDreams        = appBackground
+        static let bgAnalysis      = appBackground
+        static let bgSettings      = appBackground
+        static let bgNotifications = appBackground
+        static let bgAccount       = appBackground
     }
 
     // MARK: - Semantic Colors (what each color means)
@@ -55,15 +58,15 @@ enum ComicTheme {
             cs == .dark ? Palette.panelSurfaceDark : Palette.panelSurface
         }
 
-        // Borders — Art Deco gold tones
+        // Borders — thin black (retro)
         static func panelBorder(_ cs: ColorScheme) -> Color {
-            cs == .dark ? Palette.champagneGold : Palette.antiqueBrass
+            cs == .dark ? Palette.champagneGold : .black
         }
         static func frameBorderInner(_ cs: ColorScheme) -> Color {
-            cs == .dark ? Palette.champagneGold.opacity(0.5) : Palette.antiqueBrass.opacity(0.6)
+            cs == .dark ? Palette.champagneGold.opacity(0.5) : Color.black.opacity(0.3)
         }
         static func cornerOrnament(_ cs: ColorScheme) -> Color {
-            cs == .dark ? Palette.champagneGold : Palette.antiqueBrass
+            cs == .dark ? Palette.champagneGold : .black
         }
     }
 
@@ -116,18 +119,18 @@ enum ComicTheme {
     // MARK: - Dimensions
 
     enum Dimensions {
-        static let panelBorderWidth: CGFloat = 1.5
+        static let panelBorderWidth: CGFloat = 0.75
         static let panelInnerBorderWidth: CGFloat = 0.75
         static let panelBorderGap: CGFloat = 3
-        static let panelCornerRadius: CGFloat = 4
+        static let panelCornerRadius: CGFloat = 16
         static let cornerOrnamentSize: CGFloat = 14
         static let gutterWidth: CGFloat = 16
         static let cardShadowRadius: CGFloat = 0
-        static let buttonBorderWidth: CGFloat = 1.5
-        static let buttonCornerRadius: CGFloat = 6
-        static let speechBubbleBorderWidth: CGFloat = 1.0
-        static let speechBubbleCornerRadius: CGFloat = 12
-        static let badgeCornerRadius: CGFloat = 4
+        static let buttonBorderWidth: CGFloat = 1.0
+        static let buttonCornerRadius: CGFloat = 12
+        static let speechBubbleBorderWidth: CGFloat = 0.75
+        static let speechBubbleCornerRadius: CGFloat = 14
+        static let badgeCornerRadius: CGFloat = 8
     }
 
     // MARK: - Adaptive Colors (legacy helper)
@@ -150,19 +153,15 @@ struct ComicShadow: ViewModifier {
         switch intensity {
         case .light:
             content
-                .shadow(color: .black.opacity(0.25), radius: 0, x: 2, y: 2)
-                .shadow(color: .black.opacity(0.10), radius: 1, x: 3, y: 3)
+                .shadow(color: .black.opacity(0.06), radius: 3, x: 0, y: 1)
         case .medium:
             content
-                .shadow(color: .black.opacity(0.30), radius: 0, x: 2, y: 2)
-                .shadow(color: .black.opacity(0.15), radius: 1, x: 3, y: 3)
-                .shadow(color: .black.opacity(0.08), radius: 3, x: 4, y: 5)
+                .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
         case .heavy:
             content
-                .shadow(color: .black.opacity(0.40), radius: 0, x: 3, y: 3)
-                .shadow(color: .black.opacity(0.20), radius: 1, x: 4, y: 4)
-                .shadow(color: .black.opacity(0.10), radius: 2, x: 5, y: 6)
-                .shadow(color: .black.opacity(0.05), radius: 5, x: 6, y: 8)
+                .shadow(color: .black.opacity(0.10), radius: 6, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 6)
         }
     }
 }
@@ -173,7 +172,7 @@ extension View {
     }
 }
 
-// MARK: - Retro Art Deco Button Styles
+// MARK: - Retro Button Styles
 
 struct ComicPrimaryButtonStyle: ButtonStyle {
     var color: Color = ComicTheme.Semantic.primaryAction
@@ -189,22 +188,11 @@ struct ComicPrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 20)
             .padding(.vertical, 13)
             .frame(maxWidth: .infinity)
-            .background(
-                LinearGradient(
-                    colors: [color, color.opacity(0.85)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .clipShape(Capsule())
+            .background(color)
+            .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
             .overlay(
-                Capsule()
-                    .stroke(color.opacity(0.6), lineWidth: 1.5)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(.white.opacity(0.15), lineWidth: 0.75)
-                    .padding(4)
+                RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                    .stroke(.black.opacity(0.15), lineWidth: 0.75)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.9 : 1.0)
@@ -228,15 +216,10 @@ struct ComicSecondaryButtonStyle: ButtonStyle {
             .padding(.vertical, 11)
             .frame(maxWidth: .infinity)
             .background(ComicTheme.Semantic.cardSurface(colorScheme))
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
             .overlay(
-                Capsule()
-                    .stroke(color.opacity(0.5), lineWidth: 1.5)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(color.opacity(0.12), lineWidth: 0.75)
-                    .padding(4)
+                RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                    .stroke(color.opacity(0.4), lineWidth: 0.75)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.85 : 1.0)
@@ -260,15 +243,10 @@ struct ComicDestructiveButtonStyle: ButtonStyle {
             .padding(.vertical, 11)
             .frame(maxWidth: .infinity)
             .background(ComicTheme.Semantic.cardSurface(colorScheme))
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius))
             .overlay(
-                Capsule()
-                    .stroke(color.opacity(0.5), lineWidth: 1.5)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(color.opacity(0.12), lineWidth: 0.75)
-                    .padding(4)
+                RoundedRectangle(cornerRadius: ComicTheme.Dimensions.buttonCornerRadius)
+                    .stroke(color.opacity(0.4), lineWidth: 0.75)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.85 : 1.0)
