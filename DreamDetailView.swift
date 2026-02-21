@@ -251,6 +251,7 @@ struct DreamDetailView: View {
         .halftoneBackground(ComicTheme.Palette.bgDreams)
         .navigationTitle(L("Dream"))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .confirmationDialog(L("Delete this dream?"), isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
             Button(L("Delete"), role: .destructive) {
                 store.deleteDream(dream)
