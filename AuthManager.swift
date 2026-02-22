@@ -186,18 +186,14 @@ class AuthManager: ObservableObject {
     }
     
     /// Update profile on backend (PATCH) and cache locally
-    func updateProfile(gender: String?, age: Int?) async {
-        do {
-            let updated = try await backendService.updateMyProfile(
-                gender: gender,
-                age: age
-            )
-            await MainActor.run {
-                self.userProfile = updated
-                cacheProfile(updated)
-            }
-        } catch {
-            print("Failed to update profile: \(error)")
+    func updateProfile(gender: String?, age: Int?) async throws {
+        let updated = try await backendService.updateMyProfile(
+            gender: gender,
+            age: age
+        )
+        await MainActor.run {
+            self.userProfile = updated
+            cacheProfile(updated)
         }
     }
 
@@ -232,6 +228,12 @@ class AuthManager: ObservableObject {
                     cacheProfile(profile)
                 }
             }
+        } catch BackendError.notFound {
+            // User account not found on this server — stale credentials, clear them
+            print("[Auth] User not found on server, clearing stale credentials")
+            await MainActor.run { logout() }
+        } catch BackendError.unauthorized {
+            await MainActor.run { logout() }
         } catch {
             print("Failed to refresh user: \(error)")
         }
@@ -337,6 +339,9 @@ class AuthManager: ObservableObject {
             UserDefaults.standard.set(email, forKey: emailKey)
             UserDefaults.standard.set(self.emailVerified, forKey: emailVerifiedKey)
         }
+
+        // Fetch full profile (includes avatar description) after login
+        await fetchProfile()
     }
     
     /// Handle authentication errors

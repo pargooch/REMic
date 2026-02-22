@@ -358,8 +358,14 @@ class BackendService {
         if let age = age { body["age"] = age }
         if let timezone = timezone { body["timezone"] = timezone }
         let data = try JSONSerialization.data(withJSONObject: body)
-        let request = try makeRequest(url: url, method: "PATCH", body: data, requiresAuth: true)
-        return try await send(request, as: UserProfile.self)
+        do {
+            let request = try makeRequest(url: url, method: "PATCH", body: data, requiresAuth: true)
+            return try await send(request, as: UserProfile.self)
+        } catch BackendError.notFound {
+            // Profile doesn't exist yet — create it with PUT
+            let request = try makeRequest(url: url, method: "PUT", body: data, requiresAuth: true)
+            return try await send(request, as: UserProfile.self)
+        }
     }
 
     // MARK: - Avatar

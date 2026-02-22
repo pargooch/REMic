@@ -97,6 +97,8 @@ struct AccountView: View {
     @State private var gender: String = ""
     @State private var ageString: String = ""
     @State private var isSaving = false
+    @State private var saveError: String?
+    @State private var showSaveSuccess = false
     @Environment(\.colorScheme) private var colorScheme
 
     private var profileChanged: Bool {
@@ -170,6 +172,22 @@ struct AccountView: View {
                             )
                         }
 
+                        if let saveError {
+                            Text(saveError)
+                                .font(ComicTheme.Typography.speechBubble(12))
+                                .foregroundColor(ComicTheme.Colors.crimsonRed)
+                        }
+
+                        if showSaveSuccess {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(ComicTheme.Colors.emeraldGreen)
+                                Text(L("Saved"))
+                                    .font(ComicTheme.Typography.speechBubble(12))
+                                    .foregroundColor(ComicTheme.Colors.emeraldGreen)
+                            }
+                        }
+
                         if profileChanged {
                             Button {
                                 Task { await saveProfile() }
@@ -211,10 +229,17 @@ struct AccountView: View {
 
     private func saveProfile() async {
         isSaving = true
-        await authManager.updateProfile(
-            gender: gender.isEmpty ? nil : gender,
-            age: Int(ageString)
-        )
+        saveError = nil
+        showSaveSuccess = false
+        do {
+            try await authManager.updateProfile(
+                gender: gender.isEmpty ? nil : gender,
+                age: Int(ageString)
+            )
+            showSaveSuccess = true
+        } catch {
+            saveError = error.localizedDescription
+        }
         isSaving = false
     }
 }

@@ -34,6 +34,10 @@ class TurnstileService: NSObject, ObservableObject {
 
     /// Request a Turnstile token. Shows a verification overlay, then returns the token.
     func getToken() async throws -> String {
+        #if DEBUG && targetEnvironment(simulator)
+        // Use Cloudflare's official test token — works with secret key 1x0000000000000000000000000000000AA
+        return "test-token"
+        #else
         isVerifying = true
         defer { isVerifying = false }
 
@@ -42,6 +46,7 @@ class TurnstileService: NSObject, ObservableObject {
             self.pageLoaded = false
             showTurnstile()
         }
+        #endif
     }
 
     // MARK: - Private
